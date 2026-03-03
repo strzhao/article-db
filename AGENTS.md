@@ -70,7 +70,7 @@
 - 接入统一账号授权入口：必须从 `AUTH_ISSUER/authorize` 进入，不允许直连本地 `/login` 验证码流程。
 - 本地登录态改为短期网关会话：
   - `GET /auth/start`：生成 state 并跳转统一授权。
-  - `GET /auth/callback`：处理回跳，调用统一账号 `/api/auth/me` + `/api/auth/refresh`。
+  - `GET /auth/callback`：处理回跳并调用本地 finalize 接口，由服务端读取统一账号 cookie。
   - `POST /api/auth/session/finalize`：校验 state + JWT + allowlist，写入 `article_db_gateway_session`。
   - `POST /api/auth/session/logout`：清理本地网关会话。
 - 旧本地桥接接口 `POST /api/auth/send-code|verify-code|refresh|logout`、`GET /api/auth/me` 已统一废弃为 `410 deprecated_auth_endpoint`。

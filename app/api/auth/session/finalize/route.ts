@@ -13,7 +13,6 @@ export const runtime = "nodejs";
 
 interface FinalizeBody {
   state?: string;
-  accessToken?: string;
 }
 
 async function parseBody(request: Request): Promise<FinalizeBody> {
@@ -36,8 +35,7 @@ function noStore(response: NextResponse): NextResponse {
 export async function POST(request: Request): Promise<Response> {
   const body = await parseBody(request);
   const state = String(body.state || "").trim();
-  const accessToken = String(body.accessToken || "").trim();
-  if (!state || !accessToken) {
+  if (!state) {
     return jsonResponse(400, { ok: false, error: "invalid_input" }, true);
   }
 
@@ -47,6 +45,19 @@ export async function POST(request: Request): Promise<Response> {
     const response = NextResponse.json({ ok: false, error: "invalid_state" }, { status: 400 });
     clearAuthStateCookie(response);
     return noStore(response);
+  }
+
+  const accessToken = readCookie(request, "access_token");
+  if (!accessToken) {
+    return jsonResponse(
+      401,
+      {
+        ok: false,
+        error: "missing_access_token",
+        message: "missing_access_token_cookie",
+      },
+      true,
+    );
   }
 
   const authResult = await authenticateAccessToken(accessToken);
@@ -81,4 +92,26 @@ export async function POST(request: Request): Promise<Response> {
   clearAuthStateCookie(response);
   applyGatewaySessionCookie(response, createGatewaySessionCookieValue(authResult.user.email));
   return noStore(response);
+}
+
+function readCookie(request: Request, name: string): string {
+  const raw = String(request.headers.get("cookie") || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  for (const chunk of raw.split(";")) {
+    const [cookieName, ...valueParts] = chunk.split("=");
+    if (String(cookieName || "").trim() !== name) {
+      continue;
+    }
+
+    const value = valueParts.join("=").trim();
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+  return "";
 }

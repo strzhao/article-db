@@ -3,8 +3,8 @@
 ## 本次改造（统一账号接入版）
 - 已移除本地验证码登录流程入口：`/login` 现在只负责跳转 `/auth/start`。
 - 已新增统一授权入口：`GET /auth/start`（生成 state + 跳转 `https://user.stringzhao.life/authorize`）。
-- 已新增统一授权回调页：`GET /auth/callback`（按统一文档流程处理 `authorized/state`）。
-- 已新增本地会话落地接口：`POST /api/auth/session/finalize`（校验 state + JWT + allowlist）。
+- 已新增统一授权回调页：`GET /auth/callback`（处理 `authorized/state` 并调用本地 finalize）。
+- 已新增本地会话落地接口：`POST /api/auth/session/finalize`（校验 state + 读取 `access_token` cookie 验签 + allowlist）。
 - 已新增本地会话注销接口：`POST /api/auth/session/logout`（清理 `article_db_gateway_session`）。
 - 已将旧本地账号桥接接口统一废弃为 `410`：
   - `POST /api/auth/send-code`

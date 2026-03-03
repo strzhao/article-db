@@ -41,7 +41,6 @@ describe("auth session finalize route", () => {
         },
         body: JSON.stringify({
           state: "missing",
-          accessToken: "jwt-token",
         }),
       }),
     );
@@ -72,11 +71,10 @@ describe("auth session finalize route", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          cookie: `${AUTH_STATE_COOKIE_NAME}=${stateCookie}`,
+          cookie: `${AUTH_STATE_COOKIE_NAME}=${stateCookie}; access_token=jwt-token`,
         },
         body: JSON.stringify({
           state,
-          accessToken: "jwt-token",
         }),
       }),
     );
@@ -111,11 +109,10 @@ describe("auth session finalize route", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          cookie: `${AUTH_STATE_COOKIE_NAME}=${stateCookie}`,
+          cookie: `${AUTH_STATE_COOKIE_NAME}=${stateCookie}; access_token=jwt-token`,
         },
         body: JSON.stringify({
           state,
-          accessToken: "jwt-token",
         }),
       }),
     );

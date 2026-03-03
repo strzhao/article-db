@@ -65,36 +65,6 @@ export default function AuthCallbackClient(props: { authIssuer: string }): React
       }
 
       try {
-        setStatus("正在获取统一账号会话...");
-        const meResponse = await fetch(`${issuer}/api/auth/me`, {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        });
-        const mePayload = await parseJsonObject(meResponse);
-        if (!meResponse.ok) {
-          throw new Error(pickMessage(mePayload, "failed_to_fetch_me"));
-        }
-
-        const refreshResponse = await fetch(`${issuer}/api/auth/refresh`, {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          credentials: "include",
-          cache: "no-store",
-          body: JSON.stringify({}),
-        });
-        const refreshPayload = await parseJsonObject(refreshResponse);
-        if (!refreshResponse.ok) {
-          throw new Error(pickMessage(refreshPayload, "failed_to_refresh_access_token"));
-        }
-
-        const accessToken = String(refreshPayload.accessToken || "").trim();
-        if (!accessToken) {
-          throw new Error("missing_access_token");
-        }
-
         setStatus("正在写入应用会话...");
         const finalizeResponse = await fetch("/api/auth/session/finalize", {
           method: "POST",
@@ -105,7 +75,6 @@ export default function AuthCallbackClient(props: { authIssuer: string }): React
           cache: "no-store",
           body: JSON.stringify({
             state,
-            accessToken,
           }),
         });
         const finalizePayload = await parseJsonObject(finalizeResponse);
