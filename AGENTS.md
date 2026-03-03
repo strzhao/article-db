@@ -65,3 +65,22 @@
 - Preserve one-time consumption guarantees using existing Postgres state:
   - `flomo_archive_push_batches`
   - `flomo_archive_article_consumption`
+
+## Implementation Notes (2026-03-03)
+- 接入 Base Account 风格账号系统（以 JWT + 远程 JWKS 验签为主链路），并保留 `ARTICLE_DB_API_TOKEN` 作为 legacy 兼容鉴权。
+- 新增本地登录桥接路由：
+  - `POST /api/auth/send-code`
+  - `POST /api/auth/verify-code`
+  - `POST /api/auth/refresh`
+  - `POST /api/auth/logout`
+  - `GET /api/auth/me`
+- 白名单模式生效：登录用户邮箱需命中 `AUTH_EMAIL_ALLOWLIST`（逗号分隔，精确匹配，建议小写）。
+- `/archive-review` 已启用登录保护，未登录自动跳转 `/login`。
+- 现有受保护 `/api/v1/*` 路由已切换为统一鉴权结果：明确 `401/403` 与 `error` 字段，附带 `auth_mode`。
+- 新增环境变量约定：
+  - `AUTH_ISSUER`
+  - `AUTH_AUDIENCE`
+  - `AUTH_JWKS_URL`
+  - `AUTH_EMAIL_ALLOWLIST`
+- 当前白名单邮箱已按“全局 git email”对齐为：`daniel21436@hotmail.com`。
+- 当前对外访问域名：`https://article-db.stringzhao.life`（已绑定到 `article-db` 项目）。

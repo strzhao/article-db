@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { buildAiEvalObservabilitySnapshot } from "@/lib/article-db/ai-observability";
+import { ACCESS_TOKEN_COOKIE_NAME, authBridgeEnabled, authenticateAccessToken } from "@/lib/article-db/auth";
 import { listRecentIngestionRuns } from "@/lib/article-db/ingestion-runs";
 import { listArchivedArticles, recordArticleQualityFeedback } from "@/lib/article-db/repository";
 import styles from "./page.module.css";
@@ -124,8 +127,27 @@ async function submitQualityFeedback(formData: FormData): Promise<void> {
 export default async function ArchiveReviewPage(props: {
   searchParams?: Promise<SearchParams>;
 }): Promise<React.ReactNode> {
-  const timezoneName = String(process.env.DIGEST_TIMEZONE || "Asia/Shanghai").trim() || "Asia/Shanghai";
   const resolvedSearchParams = (await props.searchParams) || {};
+  const nextQuery = new URLSearchParams();
+  Object.entries(resolvedSearchParams).forEach(([key, value]) => {
+    const picked = Array.isArray(value) ? value[0] : value;
+    const normalized = String(picked || "").trim();
+    if (normalized) {
+      nextQuery.set(key, normalized);
+    }
+  });
+  const nextPath = nextQuery.toString() ? `/archive-review?${nextQuery.toString()}` : "/archive-review";
+
+  if (authBridgeEnabled()) {
+    const cookieStore = await cookies();
+    const accessToken = String(cookieStore.get(ACCESS_TOKEN_COOKIE_NAME)?.value || "").trim();
+    const authResult = await authenticateAccessToken(accessToken);
+    if (!authResult.ok) {
+      redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+    }
+  }
+
+  const timezoneName = String(process.env.DIGEST_TIMEZONE || "Asia/Shanghai").trim() || "Asia/Shanghai";
   const from = pickString(resolvedSearchParams.from) || dateShift(29, timezoneName);
   const to = pickString(resolvedSearchParams.to) || dateShift(0, timezoneName);
   const q = pickString(resolvedSearchParams.q).slice(0, 160);

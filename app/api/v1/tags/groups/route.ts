@@ -7,9 +7,9 @@ export const maxDuration = 300;
 export const preferredRegion = ["sin1"];
 
 export async function GET(request: Request): Promise<Response> {
-  const unauthorized = requireArticleDbAuth(request);
+  const unauthorized = await requireArticleDbAuth(request);
   if (unauthorized) {
-    return jsonResponse(401, { ok: false, error: unauthorized }, true);
+    return jsonResponse(unauthorized.status, { ok: false, error: unauthorized.error, auth_mode: unauthorized.mode }, true);
   }
 
   try {

@@ -27,6 +27,11 @@
 - `POST /api/v1/flomo/push-batches/next`
 - `POST /api/v1/flomo/push-batches/:batch_key/sent`
 - `POST /api/v1/flomo/push-batches/:batch_key/failed`
+- `POST /api/auth/send-code`
+- `POST /api/auth/verify-code`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
 
 ## Environment Variables
 
@@ -39,6 +44,10 @@
 
 - `ARTICLE_DB_API_TOKEN`
 - `CRON_SECRET`
+- `AUTH_ISSUER`
+- `AUTH_AUDIENCE`
+- `AUTH_JWKS_URL`
+- `AUTH_EMAIL_ALLOWLIST` (comma-separated emails, whitelist mode)
 
 ## Development
 
@@ -56,3 +65,9 @@ npm test
 - `0 * * * *` (UTC) -> `/api/v1/ingestion/run`
 
 消费层仓库 `ai-news` 通过 `ARTICLE_DB_BASE_URL` + `ARTICLE_DB_API_TOKEN` 调用本服务。
+
+当 `AUTH_ISSUER` / `AUTH_AUDIENCE` / `AUTH_JWKS_URL` 配置后：
+
+- `/archive-review` 启用登录保护，未登录会跳转 `/login`
+- JWT 登录用户必须命中 `AUTH_EMAIL_ALLOWLIST`
+- `/api/v1/*` 优先支持 JWT，同时兼容 `ARTICLE_DB_API_TOKEN`（legacy bearer）
