@@ -6,6 +6,7 @@
 - 已新增统一授权回调页：`GET /auth/callback`（处理 `authorized/state` 并调用本地 finalize）。
 - 已新增本地会话落地接口：`POST /api/auth/session/finalize`（校验 state + 读取 `access_token` cookie 验签 + allowlist）。
 - 已修复授权回跳 `Failed to fetch`：回调页不再直接跨域请求 `user.stringzhao.life/api/auth/me`，改为只调用本域 finalize 接口，避免浏览器 CORS 阻断。
+- 已增强回调失败交互：当出现 `forbidden_not_in_allowlist` 等错误时，支持“重试回跳”与“重新授权”手动重试。
 - 已新增本地会话注销接口：`POST /api/auth/session/logout`（清理 `article_db_gateway_session`）。
 - 已将旧本地账号桥接接口统一废弃为 `410`：
   - `POST /api/auth/send-code`

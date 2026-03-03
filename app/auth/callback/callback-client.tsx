@@ -40,6 +40,7 @@ export default function AuthCallbackClient(props: { authIssuer: string }): React
   const searchParams = useSearchParams();
   const [status, setStatus] = useState("正在校验授权回跳...");
   const [error, setError] = useState("");
+  const [retryNonce, setRetryNonce] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -102,7 +103,17 @@ export default function AuthCallbackClient(props: { authIssuer: string }): React
     return () => {
       active = false;
     };
-  }, [props.authIssuer, router, searchParams]);
+  }, [props.authIssuer, retryNonce, router, searchParams]);
+
+  function retryFinalize(): void {
+    setError("");
+    setStatus("正在重试回跳处理...");
+    setRetryNonce((value) => value + 1);
+  }
+
+  function restartAuthorize(): void {
+    window.location.href = "/auth/start?next=%2Farchive-review";
+  }
 
   return (
     <main
@@ -127,7 +138,46 @@ export default function AuthCallbackClient(props: { authIssuer: string }): React
         <h1 style={{ marginTop: "8px", marginBottom: "8px", fontSize: "24px" }}>统一账号登录</h1>
         <p style={{ margin: 0, color: "#18181b" }}>{status}</p>
         {error ? (
-          <p style={{ marginTop: "10px", marginBottom: 0, color: "#b91c1c" }}>错误: {error}</p>
+          <>
+            <p style={{ marginTop: "10px", marginBottom: 0, color: "#b91c1c" }}>错误: {error}</p>
+            <div
+              style={{
+                marginTop: "14px",
+                display: "flex",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                onClick={retryFinalize}
+                style={{
+                  border: "1px solid #18181b",
+                  background: "#18181b",
+                  color: "#ffffff",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+              >
+                重试回跳
+              </button>
+              <button
+                type="button"
+                onClick={restartAuthorize}
+                style={{
+                  border: "1px solid #d4d4d8",
+                  background: "#ffffff",
+                  color: "#18181b",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+              >
+                重新授权
+              </button>
+            </div>
+          </>
         ) : null}
       </section>
     </main>
