@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+!.env.*.example
+.venv/
+.cache/
+.DS_Store
+.vercel/
+node_modules/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
