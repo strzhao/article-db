@@ -1,4 +1,5 @@
-import LoginClient from "./login-client";
+import { redirect } from "next/navigation";
+import { normalizeNextPath } from "@/lib/article-db/auth-gateway-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,6 @@ export default async function LoginPage(props: {
   searchParams?: Promise<SearchParams>;
 }): Promise<React.ReactNode> {
   const resolved = (await props.searchParams) || {};
-  const nextPath = pickString(resolved.next);
-
-  return <LoginClient nextPath={nextPath} />;
+  const nextPath = normalizeNextPath(pickString(resolved.next));
+  redirect(`/auth/start?next=${encodeURIComponent(nextPath)}`);
 }

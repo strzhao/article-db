@@ -27,11 +27,10 @@
 - `POST /api/v1/flomo/push-batches/next`
 - `POST /api/v1/flomo/push-batches/:batch_key/sent`
 - `POST /api/v1/flomo/push-batches/:batch_key/failed`
-- `POST /api/auth/send-code`
-- `POST /api/auth/verify-code`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `GET /api/auth/me`
+- `GET /auth/start` (统一授权入口跳转)
+- `GET /auth/callback` (统一授权回跳处理页)
+- `POST /api/auth/session/finalize` (本地网关会话落地)
+- `POST /api/auth/session/logout` (本地网关会话清理)
 
 ## Environment Variables
 
@@ -48,6 +47,7 @@
 - `AUTH_AUDIENCE`
 - `AUTH_JWKS_URL`
 - `AUTH_EMAIL_ALLOWLIST` (comma-separated emails, whitelist mode)
+- `AUTH_GATEWAY_SESSION_SECRET` (optional, fallback to `TRACKER_SIGNING_SECRET` / `CRON_SECRET`)
 
 ## Development
 
@@ -68,6 +68,8 @@ npm test
 
 当 `AUTH_ISSUER` / `AUTH_AUDIENCE` / `AUTH_JWKS_URL` 配置后：
 
-- `/archive-review` 启用登录保护，未登录会跳转 `/login`
-- JWT 登录用户必须命中 `AUTH_EMAIL_ALLOWLIST`
-- `/api/v1/*` 优先支持 JWT，同时兼容 `ARTICLE_DB_API_TOKEN`（legacy bearer）
+- `/archive-review` 启用统一账号保护，未登录会跳转 `/auth/start`，并由账号中心 `/authorize` 完成登录授权。
+- 回跳 `/auth/callback` 后会调用统一账号 `/api/auth/me` 与 `/api/auth/refresh`，再落地本地 `article_db_gateway_session`。
+- 登录用户必须命中 `AUTH_EMAIL_ALLOWLIST`（当前仅允许 `daniel` 对应邮箱）。
+- 旧 `/api/auth/send-code|verify-code|refresh|logout|me` 已废弃并统一返回 `410 deprecated_auth_endpoint`。
+- `/api/v1/*` 仍支持 JWT（统一 issuer/audience/jwks），并保留 `ARTICLE_DB_API_TOKEN` 供非账号体系调用方兼容使用。

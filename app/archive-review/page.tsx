@@ -3,7 +3,11 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { buildAiEvalObservabilitySnapshot } from "@/lib/article-db/ai-observability";
-import { ACCESS_TOKEN_COOKIE_NAME, authBridgeEnabled, authenticateAccessToken } from "@/lib/article-db/auth";
+import { authBridgeEnabled, isEmailInAllowlist } from "@/lib/article-db/auth";
+import {
+  GATEWAY_SESSION_COOKIE_NAME,
+  verifyGatewaySessionCookieValue,
+} from "@/lib/article-db/auth-gateway-session";
 import { listRecentIngestionRuns } from "@/lib/article-db/ingestion-runs";
 import { listArchivedArticles, recordArticleQualityFeedback } from "@/lib/article-db/repository";
 import styles from "./page.module.css";
@@ -140,10 +144,10 @@ export default async function ArchiveReviewPage(props: {
 
   if (authBridgeEnabled()) {
     const cookieStore = await cookies();
-    const accessToken = String(cookieStore.get(ACCESS_TOKEN_COOKIE_NAME)?.value || "").trim();
-    const authResult = await authenticateAccessToken(accessToken);
-    if (!authResult.ok) {
-      redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+    const gatewayRaw = String(cookieStore.get(GATEWAY_SESSION_COOKIE_NAME)?.value || "").trim();
+    const gatewaySession = verifyGatewaySessionCookieValue(gatewayRaw);
+    if (!gatewaySession || !isEmailInAllowlist(gatewaySession.email)) {
+      redirect(`/auth/start?next=${encodeURIComponent(nextPath)}`);
     }
   }
 

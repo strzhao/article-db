@@ -62,34 +62,6 @@ function pickNestedString(input: unknown, path: string[]): string {
   return pickString(cursor);
 }
 
-function parseCookieHeader(cookieHeader: string | null): Map<string, string> {
-  const entries = new Map<string, string>();
-  const raw = String(cookieHeader || "").trim();
-  if (!raw) {
-    return entries;
-  }
-
-  raw.split(";").forEach((chunk) => {
-    const [name, ...valueParts] = chunk.split("=");
-    const key = String(name || "").trim();
-    if (!key) {
-      return;
-    }
-    const value = valueParts.join("=").trim();
-    entries.set(key, decodeURIComponentSafe(value));
-  });
-
-  return entries;
-}
-
-function decodeURIComponentSafe(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
 function authConfig(): AuthConfig | null {
   const issuer = String(process.env.AUTH_ISSUER || "").trim();
   const audience = String(process.env.AUTH_AUDIENCE || "").trim();
@@ -126,18 +98,11 @@ function resolveJwksResolver(jwksUrl: string): ReturnType<typeof createRemoteJWK
   return cachedJwksResolver;
 }
 
-function readAccessTokenFromRequest(request: Request): { token: string; source: "authorization" | "cookie" | "none" } {
+function readAccessTokenFromRequest(request: Request): { token: string; source: "authorization" | "none" } {
   const authorizationToken = parseBearerToken(request.headers.get("authorization"));
   if (authorizationToken) {
     return { token: authorizationToken, source: "authorization" };
   }
-
-  const cookies = parseCookieHeader(request.headers.get("cookie"));
-  const cookieToken = String(cookies.get(ACCESS_TOKEN_COOKIE_NAME) || "").trim();
-  if (cookieToken) {
-    return { token: cookieToken, source: "cookie" };
-  }
-
   return { token: "", source: "none" };
 }
 

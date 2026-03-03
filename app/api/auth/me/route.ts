@@ -1,39 +1,14 @@
-import { authenticateArticleDbRequest } from "@/lib/article-db/auth";
 import { jsonResponse } from "@/lib/infra/route-utils";
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request): Promise<Response> {
-  const authResult = await authenticateArticleDbRequest(request, {
-    allowLegacyToken: false,
-    allowUnconfigured: false,
-  });
-
-  if (!authResult.ok) {
-    return jsonResponse(
-      authResult.status,
-      {
-        ok: false,
-        error: authResult.error,
-        message: authResult.message,
-      },
-      true,
-    );
-  }
-
-  if (!authResult.user) {
-    return jsonResponse(401, { ok: false, error: "invalid_access_token" }, true);
-  }
-
+export async function GET(_request: Request): Promise<Response> {
   return jsonResponse(
-    200,
+    410,
     {
-      ok: true,
-      user: {
-        id: authResult.user.id,
-        email: authResult.user.email,
-        status: authResult.user.status,
-      },
+      ok: false,
+      error: "deprecated_auth_endpoint",
+      message: "use_unified_authorize_flow",
     },
     true,
   );
