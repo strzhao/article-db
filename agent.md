@@ -17,14 +17,14 @@
 - `/archive-review` 已切换为检查 `article_db_gateway_session`，未登录会跳转统一授权入口。
 
 ## 白名单与域名
-- 白名单邮箱：`daniel21436@hotmail.com`（daniel，全局 git email）。
+- 白名单邮箱：`daniel21436@hotmail.com,zhaoguixing@corp.netease.com`。
 - 应用域名：`https://article-db.stringzhao.life`。
 
 ## 关键环境变量
 - `AUTH_ISSUER=https://user.stringzhao.life`
 - `AUTH_AUDIENCE=base-account-client`
 - `AUTH_JWKS_URL=https://user.stringzhao.life/.well-known/jwks.json`
-- `AUTH_EMAIL_ALLOWLIST=daniel21436@hotmail.com`
+- `AUTH_EMAIL_ALLOWLIST=daniel21436@hotmail.com,zhaoguixing@corp.netease.com`
 - `AUTH_GATEWAY_SESSION_SECRET`（可选，未配时回退到 `TRACKER_SIGNING_SECRET` / `CRON_SECRET`）
 
 ## 下一步

@@ -70,6 +70,6 @@ npm test
 
 - `/archive-review` 启用统一账号保护，未登录会跳转 `/auth/start`，并由账号中心 `/authorize` 完成登录授权。
 - 回跳 `/auth/callback` 后由本服务端读取统一账号 cookie 中的 `access_token` 完成 JWT 验签，再落地本地 `article_db_gateway_session`（避免前端跨域调用）。
-- 登录用户必须命中 `AUTH_EMAIL_ALLOWLIST`（当前仅允许 `daniel` 对应邮箱）。
+- 登录用户必须命中 `AUTH_EMAIL_ALLOWLIST`（当前允许 `daniel21436@hotmail.com,zhaoguixing@corp.netease.com`）。
 - 旧 `/api/auth/send-code|verify-code|refresh|logout|me` 已废弃并统一返回 `410 deprecated_auth_endpoint`。
 - `/api/v1/*` 仍支持 JWT（统一 issuer/audience/jwks），并保留 `ARTICLE_DB_API_TOKEN` 供非账号体系调用方兼容使用。

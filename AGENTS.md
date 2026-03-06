@@ -74,7 +74,7 @@
   - `POST /api/auth/session/finalize`：校验 state + JWT + allowlist，写入 `article_db_gateway_session`。
   - `POST /api/auth/session/logout`：清理本地网关会话。
 - 旧本地桥接接口 `POST /api/auth/send-code|verify-code|refresh|logout`、`GET /api/auth/me` 已统一废弃为 `410 deprecated_auth_endpoint`。
-- 白名单模式生效：`AUTH_EMAIL_ALLOWLIST` 精确控制可访问账号（当前仅允许 `daniel21436@hotmail.com`）。
+- 白名单模式生效：`AUTH_EMAIL_ALLOWLIST` 精确控制可访问账号（当前允许 `daniel21436@hotmail.com,zhaoguixing@corp.netease.com`）。
 - `/archive-review` 已启用登录保护，未登录自动跳转 `/auth/start`。
 - 现有受保护 `/api/v1/*` 路由保持统一鉴权结果：明确 `401/403` 与 `error` 字段，附带 `auth_mode`。
 - 环境变量约定：
