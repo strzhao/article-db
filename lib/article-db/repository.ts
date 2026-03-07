@@ -1093,7 +1093,7 @@ export async function removeDailyHighQualityByArticleIds(date: string, articleId
 export async function pruneDailyHighQualityByCurrentScore(date: string, minScore: number): Promise<number> {
   await ensureArticleDbSchema();
   const normalizedDate = normalizeDate(date);
-  const boundedMinScore = boundedScore(minScore, 62);
+  const boundedMinScore = boundedScore(minScore, 50);
   const pool = getPgPool();
   const result = await pool.query(
     `
@@ -1555,8 +1555,8 @@ export async function listHighQualityByDate(params: {
   const tag = normalizeTagKey(params.tag || "");
   const qualityTier = normalizeQualityTier(params.qualityTier, "high");
   const qualityThreshold = boundedScore(
-    Number(params.qualityThreshold ?? Number.parseFloat(String(process.env.QUALITY_SCORE_THRESHOLD || "62"))),
-    62,
+    Number(params.qualityThreshold ?? Number.parseFloat(String(process.env.QUALITY_SCORE_THRESHOLD || "50"))),
+    50,
   );
   const tagGroupOrNull = tagGroup || null;
   const tagOrNull = tag || null;
@@ -1776,8 +1776,8 @@ export async function listHighQualityRange(params: {
   const tag = normalizeTagKey(params.tag || "");
   const qualityTier = normalizeQualityTier(params.qualityTier, "high");
   const qualityThreshold = boundedScore(
-    Number(params.qualityThreshold ?? Number.parseFloat(String(process.env.QUALITY_SCORE_THRESHOLD || "62"))),
-    62,
+    Number(params.qualityThreshold ?? Number.parseFloat(String(process.env.QUALITY_SCORE_THRESHOLD || "50"))),
+    50,
   );
   const tagGroupOrNull = tagGroup || null;
   const tagOrNull = tag || null;
@@ -2026,8 +2026,8 @@ export async function listArchivedArticles(params: {
   const offset = Math.max(0, Math.min(Math.trunc(params.offset), 20_000));
   const qualityTier = normalizeQualityTier(params.qualityTier, "all");
   const qualityThreshold = boundedScore(
-    Number(params.qualityThreshold ?? Number.parseFloat(String(process.env.QUALITY_SCORE_THRESHOLD || "62"))),
-    62,
+    Number(params.qualityThreshold ?? Number.parseFloat(String(process.env.QUALITY_SCORE_THRESHOLD || "50"))),
+    50,
   );
   const sourceId = String(params.sourceId || "").trim() || null;
   const primaryType = normalizeTagKey(String(params.primaryType || "")) || null;

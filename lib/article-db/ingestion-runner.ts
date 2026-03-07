@@ -261,7 +261,7 @@ export interface IngestionResult {
 export async function runIngestionWithResult(options: RunIngestionOptions = {}): Promise<IngestionResult> {
   const timezoneName = String(options.tz || process.env.DIGEST_TIMEZONE || "Asia/Shanghai").trim() || "Asia/Shanghai";
   const reportDate = nonEmptyDate(targetDate(options.date, timezoneName));
-  const qualityThreshold = Number.parseFloat(String(process.env.QUALITY_SCORE_THRESHOLD || "62")) || 62;
+  const qualityThreshold = Number.parseFloat(String(process.env.QUALITY_SCORE_THRESHOLD || "50")) || 50;
   const perSourceMax = boundedInt(String(process.env.ARTICLE_DB_MAX_PER_SOURCE || "25"), 25, 1, 60);
   const fetchBudget = boundedInt(String(process.env.SOURCE_FETCH_BUDGET || "0"), 0, 0, 2000);
   const maxEvalArticlesConfig = boundedInt(String(process.env.MAX_EVAL_ARTICLES || "120"), 120, 1, 200);

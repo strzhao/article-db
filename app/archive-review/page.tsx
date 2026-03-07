@@ -9,7 +9,9 @@ import {
   verifyGatewaySessionCookieValue,
 } from "@/lib/article-db/auth-gateway-session";
 import { listRecentIngestionRuns } from "@/lib/article-db/ingestion-runs";
-import { listArchivedArticles, recordArticleQualityFeedback } from "@/lib/article-db/repository";
+import { getHighQualityArticleDetail, listArchivedArticles, recordArticleQualityFeedback } from "@/lib/article-db/repository";
+import { ArticleDrawerProvider, ArticleTitle } from "./ArticleDrawer";
+import type { ArticleContentData } from "./ArticleDrawer";
 import styles from "./page.module.css";
 
 export const runtime = "nodejs";
@@ -126,6 +128,24 @@ async function submitQualityFeedback(formData: FormData): Promise<void> {
   });
 
   revalidatePath("/archive-review");
+}
+
+async function fetchArticleContent(articleId: string): Promise<ArticleContentData | null> {
+  "use server";
+
+  const detail = await getHighQualityArticleDetail(articleId);
+  if (!detail) return null;
+  return {
+    title: detail.title,
+    content_full_html: detail.content_full_html,
+    content_full_text: detail.content_full_text,
+    content_text: detail.content_text,
+    summary_raw: detail.summary_raw,
+    lead_paragraph: detail.lead_paragraph,
+    original_url: detail.original_url,
+    info_url: detail.info_url,
+    canonical_url: detail.canonical_url,
+  };
 }
 
 export default async function ArchiveReviewPage(props: {
@@ -332,6 +352,7 @@ export default async function ArchiveReviewPage(props: {
         <button type="submit">筛选</button>
       </form>
 
+      <ArticleDrawerProvider fetchContent={fetchArticleContent}>
       <section className={styles.list}>
         {result.items.length ? (
           result.items.map((item) => {
@@ -340,9 +361,9 @@ export default async function ArchiveReviewPage(props: {
               <article key={`${item.date}:${item.article_id}`} className={styles.card}>
                 <div className={styles.cardHead}>
                   <h2>
-                    <a href={item.info_url || item.original_url} target="_blank" rel="noreferrer noopener">
+                    <ArticleTitle articleId={item.article_id}>
                       {item.title || "无标题"}
-                    </a>
+                    </ArticleTitle>
                   </h2>
                   <span className={item.quality_tier === "high" ? styles.badgeHigh : styles.badgeGeneral}>
                     {item.quality_tier === "high" ? "高质量" : "一般"}
@@ -420,6 +441,7 @@ export default async function ArchiveReviewPage(props: {
           <p className={styles.empty}>当前筛选条件下没有归档文章。</p>
         )}
       </section>
+      </ArticleDrawerProvider>
 
       <footer className={styles.pager}>
         {prevHref ? <Link href={prevHref}>上一页</Link> : <span className={styles.disabled}>上一页</span>}

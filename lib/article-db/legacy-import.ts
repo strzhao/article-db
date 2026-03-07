@@ -126,10 +126,10 @@ export async function runLegacyImport(options: LegacyImportOptions = {}): Promis
   const limitPerDay = boundedInt(options.limitPerDay, 10, 1, 50);
   const articleLimitPerDay = boundedInt(options.articleLimitPerDay, 1000, 1, 5000);
   const overwrite = Boolean(options.overwrite);
-  const qualityScore = Math.max(0, Math.min(100, Number(options.qualityScore ?? 62) || 62));
+  const qualityScore = Math.max(0, Math.min(100, Number(options.qualityScore ?? 50) || 50));
   const highQualityThreshold = Math.max(
     0,
-    Math.min(100, Number.parseFloat(String(process.env.QUALITY_SCORE_THRESHOLD || "62")) || 62),
+    Math.min(100, Number.parseFloat(String(process.env.QUALITY_SCORE_THRESHOLD || "50")) || 50),
   );
 
   const digests = await loadLegacyDigests(days, limitPerDay);
