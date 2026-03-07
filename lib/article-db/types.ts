@@ -5,6 +5,7 @@ export interface HighQualityArticleItem {
   article_id: string;
   title: string;
   url: string;
+  original_url: string;
   summary: string;
   image_url: string;
   source_host: string;

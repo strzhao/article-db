@@ -1447,6 +1447,7 @@ function rowToHighQualityItem(row: Record<string, unknown>, qualityTier: Quality
     article_id: String(row.article_id || ""),
     title: String(row.title || ""),
     url: String(row.info_url || row.original_url || ""),
+    original_url: String(row.original_url || ""),
     summary: String(row.one_line_summary || row.lead_paragraph || row.summary_raw || "").trim(),
     image_url: String(row.image_url || ""),
     source_host: String(row.source_host || ""),

@@ -32,6 +32,7 @@ describe("article-db high-quality route", () => {
           article_id: "a1",
           title: "Title",
           url: "https://example.com/a1",
+          original_url: "https://example.com/a1",
           summary: "summary",
           image_url: "",
           source_host: "example.com",
