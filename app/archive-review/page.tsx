@@ -414,6 +414,14 @@ export default async function ArchiveReviewPage(props: {
                   <a href={item.canonical_url || item.info_url || item.original_url} target="_blank" rel="noreferrer noopener">
                     canonical/info
                   </a>
+                  {item.original_url && item.original_url !== (item.canonical_url || item.info_url) ? (
+                    <>
+                      {" · "}
+                      <a href={item.original_url} target="_blank" rel="noreferrer noopener">
+                        原始来源
+                      </a>
+                    </>
+                  ) : null}
                 </p>
 
                 <div className={styles.feedbackBar}>

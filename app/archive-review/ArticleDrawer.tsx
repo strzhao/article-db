@@ -74,6 +74,7 @@ export function ArticleDrawerProvider({
   }, [open]);
 
   const externalUrl = data ? data.info_url || data.original_url || data.canonical_url : "";
+  const sourceUrl = data && data.original_url && data.original_url !== externalUrl ? data.original_url : "";
 
   const contentEl = (() => {
     if (pending || !data) {
@@ -116,6 +117,16 @@ export function ArticleDrawerProvider({
             <div className={styles.drawerHeader}>
               <h2 className={styles.drawerTitle}>{data?.title || "加载中..."}</h2>
               <div className={styles.drawerActions}>
+                {sourceUrl ? (
+                  <a
+                    href={sourceUrl}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className={styles.drawerExtLink}
+                  >
+                    原始来源
+                  </a>
+                ) : null}
                 {externalUrl ? (
                   <a
                     href={externalUrl}
