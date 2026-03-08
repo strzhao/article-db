@@ -1,0 +1,213 @@
+import crypto from "node:crypto";
+import { requireArticleDbAuth } from "@/lib/article-db/auth";
+import { detectPlatform, requiresWorker } from "@/lib/domain/platform-detector";
+import {
+  DEFAULT_BLOB_TTL_HOURS,
+  type ExtractionTask,
+  type ExtractedResource,
+} from "@/lib/domain/url-extraction-models";
+import { fetchArticleContent, extractRelatedImagesFromHtml } from "@/lib/fetch/article-content-fetcher";
+import { extractTwitterContent } from "@/lib/fetch/twitter-extractor";
+import { enqueueExtractionTask, listPendingTasks } from "@/lib/infra/extraction-queue";
+import { jsonResponse } from "@/lib/infra/route-utils";
+import { buildUpstashClientOrNone } from "@/lib/infra/upstash";
+
+export const runtime = "nodejs";
+export const maxDuration = 120;
+export const preferredRegion = ["sin1"];
+
+function generateTaskId(): string {
+  return `ext_${Date.now()}_${crypto.randomBytes(6).toString("hex")}`;
+}
+
+function isValidUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return ["http:", "https:"].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
+function extractMetaContent(html: string, property: string): string {
+  const re = new RegExp(
+    `<meta\\b[^>]*(?:property|name)\\s*=\\s*["']${property}["'][^>]*content\\s*=\\s*["']([^"']*)["']`,
+    "i",
+  );
+  const match = re.exec(html);
+  if (match) return String(match[1] || "").trim();
+
+  const re2 = new RegExp(
+    `<meta\\b[^>]*content\\s*=\\s*["']([^"']*)["'][^>]*(?:property|name)\\s*=\\s*["']${property}["']`,
+    "i",
+  );
+  const match2 = re2.exec(html);
+  return match2 ? String(match2[1] || "").trim() : "";
+}
+
+function extractTitle(html: string): string {
+  const ogTitle = extractMetaContent(html, "og:title");
+  if (ogTitle) return ogTitle;
+  const titleMatch = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html);
+  return titleMatch ? String(titleMatch[1] || "").trim() : "";
+}
+
+async function extractWebpage(url: string, taskId: string): Promise<ExtractionTask> {
+  const content = await fetchArticleContent(url, { timeoutMs: 15_000 });
+
+  const resources: ExtractedResource[] = [];
+
+  // Text content
+  if (content.text) {
+    resources.push({
+      type: "text",
+      url: url,
+      filename: "content.txt",
+      size_bytes: content.text.length,
+      mime_type: "text/plain",
+    });
+  }
+
+  // Images
+  for (const img of content.images) {
+    resources.push({
+      type: "image",
+      url: img.url,
+      filename: img.alt || `image_${resources.length}.jpg`,
+      size_bytes: 0,
+      mime_type: "image/jpeg",
+    });
+  }
+
+  const ogDesc = extractMetaContent(content.html, "og:description");
+
+  return {
+    task_id: taskId,
+    url,
+    platform: "webpage",
+    status: "completed",
+    user_id: "",
+    resources,
+    metadata: {
+      title: extractTitle(content.html) || url,
+      description: ogDesc || content.text.slice(0, 300),
+      author: extractMetaContent(content.html, "author") || extractMetaContent(content.html, "og:site_name") || "",
+      published_at: extractMetaContent(content.html, "article:published_time") || undefined,
+      tags: [],
+    },
+    created_at: new Date().toISOString(),
+    completed_at: new Date().toISOString(),
+    blob_ttl_hours: DEFAULT_BLOB_TTL_HOURS,
+  };
+}
+
+async function extractTwitter(url: string, taskId: string): Promise<ExtractionTask> {
+  const { resources, metadata } = await extractTwitterContent(url, taskId);
+
+  return {
+    task_id: taskId,
+    url,
+    platform: "twitter",
+    status: "completed",
+    user_id: "",
+    resources,
+    metadata,
+    created_at: new Date().toISOString(),
+    completed_at: new Date().toISOString(),
+    blob_ttl_hours: DEFAULT_BLOB_TTL_HOURS,
+  };
+}
+
+export async function POST(request: Request): Promise<Response> {
+  const unauthorized = await requireArticleDbAuth(request);
+  if (unauthorized) {
+    return jsonResponse(unauthorized.status, { ok: false, error: unauthorized.error, auth_mode: unauthorized.mode }, true);
+  }
+
+  try {
+    const body = (await request.json()) as { url?: string; blob_ttl_hours?: number; user_id?: string };
+    const url = String(body?.url || "").trim();
+    if (!url || !isValidUrl(url)) {
+      return jsonResponse(400, { ok: false, error: "invalid_url", message: "请提供有效的 URL" }, true);
+    }
+
+    const blobTtlHours = Math.max(1, Math.min(168, Number(body?.blob_ttl_hours) || DEFAULT_BLOB_TTL_HOURS));
+    const userId = String(body?.user_id || "").trim();
+    const taskId = generateTaskId();
+    const platform = detectPlatform(url);
+
+    // Webpage and Twitter can be extracted directly on Vercel
+    if (platform === "webpage") {
+      const task = await extractWebpage(url, taskId);
+      task.user_id = userId;
+      return jsonResponse(200, { ok: true, task }, true);
+    }
+
+    if (platform === "twitter") {
+      const task = await extractTwitter(url, taskId);
+      task.user_id = userId;
+      return jsonResponse(200, { ok: true, task }, true);
+    }
+
+    // Video/social platforms require the local worker
+    if (requiresWorker(platform)) {
+      const redis = buildUpstashClientOrNone();
+      if (!redis) {
+        return jsonResponse(503, { ok: false, error: "queue_unavailable", message: "Redis 未配置，无法创建异步提取任务" }, true);
+      }
+
+      const task: ExtractionTask = {
+        task_id: taskId,
+        url,
+        platform,
+        status: "pending",
+        user_id: userId,
+        resources: [],
+        metadata: { title: "", description: "", author: "" },
+        created_at: new Date().toISOString(),
+        blob_ttl_hours: blobTtlHours,
+      };
+
+      await enqueueExtractionTask(redis, task);
+
+      return jsonResponse(202, {
+        ok: true,
+        task: {
+          task_id: taskId,
+          url,
+          platform,
+          status: "pending",
+          created_at: task.created_at,
+          blob_ttl_hours: blobTtlHours,
+        },
+      }, true);
+    }
+
+    return jsonResponse(400, { ok: false, error: "unsupported_platform", message: `不支持的平台: ${platform}` }, true);
+  } catch (error) {
+    return jsonResponse(500, { ok: false, error: error instanceof Error ? error.message : String(error) }, true);
+  }
+}
+
+/** List pending tasks for the extraction worker to poll. */
+export async function GET(request: Request): Promise<Response> {
+  const unauthorized = await requireArticleDbAuth(request);
+  if (unauthorized) {
+    return jsonResponse(unauthorized.status, { ok: false, error: unauthorized.error }, true);
+  }
+
+  try {
+    const redis = buildUpstashClientOrNone();
+    if (!redis) {
+      return jsonResponse(200, { ok: true, tasks: [] }, true);
+    }
+
+    const url = new URL(request.url);
+    const limit = Math.max(1, Math.min(20, Number(url.searchParams.get("limit")) || 5));
+    const tasks = await listPendingTasks(redis, limit);
+
+    return jsonResponse(200, { ok: true, tasks }, true);
+  } catch (error) {
+    return jsonResponse(500, { ok: false, error: error instanceof Error ? error.message : String(error) }, true);
+  }
+}
