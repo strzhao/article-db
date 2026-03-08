@@ -64,6 +64,13 @@ function exec(cmd: string, args: string[], cwd: string): Promise<string> {
   });
 }
 
+/** Return --proxy args for yt-dlp if proxy is configured */
+export function ytdlpProxyArgs(_url: string): string[] {
+  const proxyUrl = process.env.https_proxy || process.env.HTTPS_PROXY || process.env.http_proxy || "";
+  if (!proxyUrl) return [];
+  return ["--proxy", proxyUrl];
+}
+
 function guessResourceType(ext: string): string {
   if ([".mp4", ".webm", ".mkv"].includes(ext)) return "video";
   if ([".m4a", ".mp3", ".opus", ".ogg"].includes(ext)) return "audio";
@@ -80,8 +87,14 @@ export async function extractYouTube(url: string, taskId: string, blobTtlHours: 
   const workDir = await mkdtemp(join(tmpdir(), "ytdlp-"));
 
   try {
+    // Common args: use browser cookies for authenticated platforms (Bilibili etc.)
+    const cookieArgs = [
+      "--cookies-from-browser", "chrome",
+      ...ytdlpProxyArgs(url),
+    ];
+
     // Step 1: Get metadata (no download)
-    const metaJson = await exec("yt-dlp", ["--dump-json", "--no-download", url], workDir);
+    const metaJson = await exec("yt-dlp", [...cookieArgs, "--dump-json", "--no-download", url], workDir);
     const meta = JSON.parse(metaJson);
 
     const metadata: ExtractionMetadata = {
@@ -96,6 +109,7 @@ export async function extractYouTube(url: string, taskId: string, blobTtlHours: 
 
     // Step 2: Download video + thumbnail (subtitles may fail due to rate limiting)
     await exec("yt-dlp", [
+      ...cookieArgs,
       "-f", "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
       "--merge-output-format", "mp4",
       "--write-thumbnail",
@@ -108,6 +122,7 @@ export async function extractYouTube(url: string, taskId: string, blobTtlHours: 
     // Step 3: Try subtitles separately (non-fatal)
     try {
       await exec("yt-dlp", [
+        ...cookieArgs,
         "--skip-download",
         "--write-subs",
         "--write-auto-sub",

@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import { mkdtemp, rm, readdir, stat } from "node:fs/promises";
 import { join, extname } from "node:path";
 import { uploadFileToBlob } from "../upload.js";
+import { ytdlpProxyArgs } from "./youtube.js";
 
 interface ExtractedResource {
   type: string;
@@ -117,7 +118,7 @@ export async function extractXiaohongshu(
       await new Promise<void>((resolve, reject) => {
         execFile(
           "yt-dlp",
-          ["-f", "best", "--write-thumbnail", "-o", "%(title).80s.%(ext)s", url],
+          ["--cookies-from-browser", "chrome", ...ytdlpProxyArgs(url), "-f", "best", "--write-thumbnail", "-o", "%(title).80s.%(ext)s", url],
           { cwd: workDir, timeout: 120_000, maxBuffer: 5 * 1024 * 1024 },
           (error) => {
             if (error) reject(error);

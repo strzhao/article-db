@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import { mkdtemp, rm, readdir, stat } from "node:fs/promises";
 import { join, extname } from "node:path";
 import { uploadFileToBlob } from "../upload.js";
+import { ytdlpProxyArgs } from "./youtube.js";
 
 interface ExtractedResource {
   type: string;
@@ -60,7 +61,7 @@ export async function extractInstagram(
     };
 
     try {
-      const metaJson = await exec("yt-dlp", ["--dump-json", "--no-download", url], workDir);
+      const metaJson = await exec("yt-dlp", ["--cookies-from-browser", "chrome", ...ytdlpProxyArgs(url), "--dump-json", "--no-download", url], workDir);
       const meta = JSON.parse(metaJson);
       metadata = {
         title: String(meta.title || meta.description || "Instagram Post").slice(0, 200),
@@ -75,6 +76,8 @@ export async function extractInstagram(
 
     // Download content
     await exec("yt-dlp", [
+      "--cookies-from-browser", "chrome",
+      ...ytdlpProxyArgs(url),
       "-f", "best",
       "--write-thumbnail",
       "--no-playlist",
