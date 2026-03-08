@@ -1,6 +1,4 @@
-/**
- * Reports extraction results back to article-db.
- */
+// Reports extraction results back to article-db.
 
 interface ExtractedResource {
   type: string;
@@ -37,9 +35,31 @@ function authHeaders(): Record<string, string> {
   return { Authorization: `Bearer ${ARTICLE_DB_API_TOKEN}` };
 }
 
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  retries = 3,
+): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30_000);
+      const response = await fetch(url, { ...init, signal: controller.signal });
+      clearTimeout(timeout);
+      return response;
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      const delay = (i + 1) * 3000;
+      console.log(`[reporter] Retry ${i + 1}/${retries} in ${delay}ms: ${error instanceof Error ? error.message : error}`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw new Error("unreachable");
+}
+
 export async function reportTaskComplete(taskId: string, payload: ReportPayload): Promise<void> {
   const url = `${ARTICLE_DB_BASE_URL}/api/v1/extract-url/${encodeURIComponent(taskId)}/complete`;
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -65,7 +85,7 @@ interface PendingTask {
 
 export async function fetchPendingTasks(limit = 5): Promise<PendingTask[]> {
   const url = `${ARTICLE_DB_BASE_URL}/api/v1/extract-url?limit=${limit}`;
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method: "GET",
     headers: {
       Accept: "application/json",

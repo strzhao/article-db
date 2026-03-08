@@ -12,6 +12,15 @@
 // For continuous polling, use a cron job or process manager:
 //   crontab: every-5-min cd /path/to/extraction-worker && npm start
 
+import { ProxyAgent, setGlobalDispatcher } from "undici";
+
+// Auto-detect system proxy and apply to Node.js fetch
+const proxyUrl = process.env.https_proxy || process.env.HTTPS_PROXY || process.env.http_proxy || process.env.HTTP_PROXY;
+if (proxyUrl) {
+  setGlobalDispatcher(new ProxyAgent(proxyUrl));
+  console.log(`  Proxy: ${proxyUrl}`);
+}
+
 import { fetchPendingTasks, reportTaskComplete } from "./reporter.js";
 import { extractYouTube } from "./extractors/youtube.js";
 import { extractBilibili } from "./extractors/bilibili.js";
