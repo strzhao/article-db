@@ -1,18 +1,16 @@
-/**
- * Extraction Worker — polls article-db for pending tasks and processes them.
- *
- * Prerequisites:
- *   - yt-dlp installed (brew install yt-dlp / pip install yt-dlp)
- *   - ffmpeg installed (brew install ffmpeg)
- *   - Environment variables: ARTICLE_DB_BASE_URL, ARTICLE_DB_API_TOKEN, BLOB_TOKEN
- *
- * Usage:
- *   npm start          # run once (process all pending tasks, then exit)
- *   npm run dev         # watch mode with auto-reload
- *
- * For continuous polling, use a cron job or process manager:
- *   crontab: */5 * * * * cd /path/to/extraction-worker && npm start
- */
+// Extraction Worker — polls article-db for pending tasks and processes them.
+//
+// Prerequisites:
+//   - yt-dlp installed (brew install yt-dlp / pip install yt-dlp)
+//   - ffmpeg installed (brew install ffmpeg)
+//   - Environment variables: ARTICLE_DB_BASE_URL, ARTICLE_DB_API_TOKEN, BLOB_READ_WRITE_TOKEN
+//
+// Usage:
+//   npm start          # run once (process all pending tasks, then exit)
+//   npm run dev        # watch mode with auto-reload
+//
+// For continuous polling, use a cron job or process manager:
+//   crontab: every-5-min cd /path/to/extraction-worker && npm start
 
 import { fetchPendingTasks, reportTaskComplete } from "./reporter.js";
 import { extractYouTube } from "./extractors/youtube.js";
