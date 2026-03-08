@@ -252,7 +252,8 @@ export async function fetchArticleContent(
       method: "GET",
       redirect: "follow",
       headers: {
-        Accept: "text/html,application/xhtml+xml",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (compatible; AINewsBot/1.0; +https://ai-news.stringzhao.life)",
       },
       signal: controller.signal,
     });
