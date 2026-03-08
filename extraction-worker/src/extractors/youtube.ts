@@ -94,21 +94,34 @@ export async function extractYouTube(url: string, taskId: string, blobTtlHours: 
       tags: Array.isArray(meta.tags) ? meta.tags.slice(0, 20).map(String) : [],
     };
 
-    // Step 2: Download video + subtitles + thumbnail
+    // Step 2: Download video + thumbnail (subtitles may fail due to rate limiting)
     await exec("yt-dlp", [
       "-f", "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
       "--merge-output-format", "mp4",
-      "--write-subs",
-      "--write-auto-sub",
-      "--sub-lang", "en,zh-Hans,zh-Hant,ja,ko",
-      "--convert-subs", "srt",
       "--write-thumbnail",
       "--no-playlist",
+      "--ignore-errors",
       "-o", "%(title).80s.%(ext)s",
       url,
     ], workDir);
 
-    // Step 3: Upload all output files to Vercel Blob
+    // Step 3: Try subtitles separately (non-fatal)
+    try {
+      await exec("yt-dlp", [
+        "--skip-download",
+        "--write-subs",
+        "--write-auto-sub",
+        "--sub-lang", "en,zh-Hans,zh-Hant,ja,ko",
+        "--convert-subs", "srt",
+        "--no-playlist",
+        "-o", "%(title).80s.%(ext)s",
+        url,
+      ], workDir);
+    } catch {
+      console.log(`[${taskId}] Subtitle download failed (non-fatal), continuing...`);
+    }
+
+    // Step 4: Upload all output files to Vercel Blob
     const files = await readdir(workDir);
     const resources: ExtractedResource[] = [];
     const expiresAt = computeExpiresAt(blobTtlHours);
