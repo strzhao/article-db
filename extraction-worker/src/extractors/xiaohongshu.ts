@@ -135,6 +135,7 @@ async function extractViaPlaywright(url: string, taskId: string): Promise<NoteDa
   const launchOptions: Record<string, unknown> = {
     headless: true,
     channel: "chrome",
+    args: ["--disable-blink-features=AutomationControlled"],
   };
   if (proxyUrl) {
     launchOptions.proxy = { server: proxyUrl };
@@ -158,8 +159,25 @@ async function extractViaPlaywright(url: string, taskId: string): Promise<NoteDa
     const context = await browser.newContext(contextOptions);
     const page = await context.newPage();
 
+    // Anti-detection: hide webdriver flag
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", { get: () => false });
+    });
+
     // Navigate and wait for content to load
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
+
+    // Dismiss login popup if it appears (XHS shows modal overlay even with valid session)
+    try {
+      const closeBtn = await page.$(".close-button, [class*=close], .login-modal [class*=close], [class*=modal] [class*=close]");
+      if (closeBtn) {
+        await closeBtn.click();
+        console.log(`[${taskId}] Dismissed login popup`);
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    } catch {
+      // no popup or close button — fine
+    }
 
     // Wait for note content to appear (XHS renders note into #noteContainer or similar)
     try {

@@ -211,7 +211,7 @@ function parseGraphQLMedia(media: any): PostData | null {
 // ===== Tier 1: Playwright with session =====
 async function extractViaPlaywright(url: string, shortcode: string, taskId: string): Promise<PostData | null> {
   const proxyUrl = process.env.https_proxy || process.env.HTTPS_PROXY || process.env.http_proxy || "";
-  const launchOptions: Record<string, unknown> = { headless: true, channel: "chrome" };
+  const launchOptions: Record<string, unknown> = { headless: true, channel: "chrome", args: ["--disable-blink-features=AutomationControlled"] };
   if (proxyUrl) {
     launchOptions.proxy = { server: proxyUrl };
   }
@@ -235,6 +235,11 @@ async function extractViaPlaywright(url: string, shortcode: string, taskId: stri
     // Intercept GraphQL responses for structured data
     let capturedMedia: any = null;
     const page = await context.newPage();
+
+    // Anti-detection: hide webdriver flag
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", { get: () => false });
+    });
 
     page.on("response", async (response) => {
       try {

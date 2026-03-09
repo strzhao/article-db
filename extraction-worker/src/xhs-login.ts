@@ -52,15 +52,33 @@ async function main() {
   }
 
   // Poll for login success: check if cookies indicate logged-in state
+  // Note: web_session exists for anonymous users too, so we need stronger signals
   const checkInterval = setInterval(async () => {
     try {
       const cookies = await context.cookies("https://www.xiaohongshu.com");
-      // XHS sets specific cookies after login (e.g., web_session, customer-sso-sid)
-      const hasAuth = cookies.some(
-        (c) => c.name === "web_session" || c.name === "customer-sso-sid" || c.name === "galaxy_creator_session_id",
+      const cookieNames = cookies.map((c) => c.name);
+
+      // Strong login indicators (set only after real login)
+      const hasStrongAuth = cookieNames.some((n) =>
+        n === "customer-sso-sid" || n === "galaxy_creator_session_id" || n === "access-token-ark" || n === "customerClientId",
       );
-      if (hasAuth && !saved) {
-        console.log("Login detected! Saving session...");
+
+      // Weaker signal: check if page DOM indicates logged-in state
+      let hasPageAuth = false;
+      if (!hasStrongAuth) {
+        try {
+          hasPageAuth = await page.evaluate(() => {
+            // Logged-in users see their avatar/profile section instead of login prompt
+            const hasLoginPrompt = document.body.innerText.includes("马上登录即可");
+            const hasUserElement = document.querySelector("[class*=user-avatar], [class*=sidebar-user], [class*=avatar]") !== null;
+            return hasUserElement && !hasLoginPrompt;
+          });
+        } catch {}
+      }
+
+      if ((hasStrongAuth || hasPageAuth) && !saved) {
+        console.log(`Login detected! (cookies: ${hasStrongAuth ? cookieNames.filter(n => ["customer-sso-sid", "galaxy_creator_session_id", "access-token-ark", "customerClientId"].includes(n)).join(", ") : "page-based detection"})`);
+        console.log("Saving session...");
         await saveState();
       }
     } catch {

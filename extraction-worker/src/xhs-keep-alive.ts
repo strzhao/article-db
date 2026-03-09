@@ -97,6 +97,7 @@ async function main() {
     headless: true,
     channel: "chrome",
     ...(proxyUrl ? { proxy: { server: proxyUrl } } : {}),
+    args: ["--disable-blink-features=AutomationControlled"],
   });
 
   try {
@@ -108,6 +109,11 @@ async function main() {
     });
 
     const page = await context.newPage();
+
+    // Anti-detection: hide webdriver flag
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", { get: () => false });
+    });
 
     // Visit a random entry page
     const entryUrl = pickRandom(ENTRY_PAGES);
