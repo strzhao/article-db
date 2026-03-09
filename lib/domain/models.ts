@@ -9,7 +9,7 @@ export interface SourceConfig {
   name: string;
   url: string;
   sourceWeight: number;
-  sourceType: string | null;
+  sourceType: string;
   onlyExternalLinks: boolean;
 }
 

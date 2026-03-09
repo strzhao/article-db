@@ -345,6 +345,7 @@ function rowToArchivedArticle(
     is_selected: Boolean(row.is_selected),
     source_id: String(row.source_id || ""),
     source_name: String(row.source_name || ""),
+    source_channel: String(row.source_channel || "rss"),
     source_host: String(row.source_host || ""),
     title: String(row.title || ""),
     canonical_url: String(row.canonical_url || ""),
@@ -1453,6 +1454,7 @@ function rowToHighQualityItem(row: Record<string, unknown>, qualityTier: Quality
     source_host: String(row.source_host || ""),
     source_id: String(row.source_id || ""),
     source_name: String(row.source_name || ""),
+    source_channel: String(row.source_channel || "rss"),
     date,
     digest_id: `article_db_${date}`,
     generated_at: generatedAt,
@@ -1546,6 +1548,7 @@ export async function listHighQualityByDate(params: {
   tag?: string;
   qualityTier?: string;
   qualityThreshold?: number;
+  sourceChannel?: string;
 }): Promise<{ total: number; items: HighQualityArticleItem[] }> {
   await ensureArticleDbSchema();
   const pool = getPgPool();
@@ -1561,16 +1564,20 @@ export async function listHighQualityByDate(params: {
   );
   const tagGroupOrNull = tagGroup || null;
   const tagOrNull = tag || null;
+  const sourceChannelOrNull = String(params.sourceChannel || "").trim() || null;
 
   if (qualityTier === "high") {
     const totalRow = await pool.query<{ total: string | number }>(
       `
       SELECT COUNT(*) AS total
       FROM daily_high_quality_articles d
+      INNER JOIN articles a ON a.id = d.article_id
+      INNER JOIN sources s ON s.id = a.source_id
       INNER JOIN article_analysis aa ON aa.article_id = d.article_id
       WHERE d.date = $1::date
         AND aa.quality_score >= $4::double precision
         AND ($2::text IS NULL OR aa.tag_groups ? $2::text)
+        AND ($5::text IS NULL OR s.type = $5::text)
         AND (
           $3::text IS NULL OR
           CASE
@@ -1588,7 +1595,7 @@ export async function listHighQualityByDate(params: {
           END
         )
     `,
-      [date, tagGroupOrNull, tagOrNull, qualityThreshold],
+      [date, tagGroupOrNull, tagOrNull, qualityThreshold, sourceChannelOrNull],
     );
 
     const result = await pool.query(
@@ -1601,6 +1608,7 @@ export async function listHighQualityByDate(params: {
         a.id AS article_id,
         a.source_id,
         s.name AS source_name,
+        s.type AS source_channel,
         a.title,
         a.original_url,
         a.info_url,
@@ -1628,6 +1636,7 @@ export async function listHighQualityByDate(params: {
       WHERE d.date = $1::date
         AND aa.quality_score >= $6::double precision
         AND ($4::text IS NULL OR aa.tag_groups ? $4::text)
+        AND ($7::text IS NULL OR s.type = $7::text)
         AND (
           $5::text IS NULL OR
           CASE
@@ -1647,7 +1656,7 @@ export async function listHighQualityByDate(params: {
       ORDER BY d.rank_score DESC, d.selected_at DESC
       LIMIT $2 OFFSET $3
     `,
-      [date, limit, offset, tagGroupOrNull, tagOrNull, qualityThreshold],
+      [date, limit, offset, tagGroupOrNull, tagOrNull, qualityThreshold, sourceChannelOrNull],
     );
 
     return {
@@ -1660,6 +1669,8 @@ export async function listHighQualityByDate(params: {
     `
     SELECT COUNT(*) AS total
     FROM daily_analyzed_articles d
+    INNER JOIN articles a ON a.id = d.article_id
+    INNER JOIN sources s ON s.id = a.source_id
     INNER JOIN article_analysis aa ON aa.article_id = d.article_id
     WHERE d.date = $1::date
       AND (
@@ -1667,6 +1678,7 @@ export async function listHighQualityByDate(params: {
         OR ($2::text = 'general' AND d.quality_score_snapshot < $3::double precision)
       )
       AND ($4::text IS NULL OR aa.tag_groups ? $4::text)
+      AND ($6::text IS NULL OR s.type = $6::text)
       AND (
         $5::text IS NULL OR
         CASE
@@ -1684,7 +1696,7 @@ export async function listHighQualityByDate(params: {
         END
       )
   `,
-    [date, qualityTier, qualityThreshold, tagGroupOrNull, tagOrNull],
+    [date, qualityTier, qualityThreshold, tagGroupOrNull, tagOrNull, sourceChannelOrNull],
   );
 
   const result = await pool.query(
@@ -1697,6 +1709,7 @@ export async function listHighQualityByDate(params: {
       a.id AS article_id,
       a.source_id,
       s.name AS source_name,
+      s.type AS source_channel,
       a.title,
       a.original_url,
       a.info_url,
@@ -1727,6 +1740,7 @@ export async function listHighQualityByDate(params: {
         OR ($4::text = 'general' AND d.quality_score_snapshot < $5::double precision)
       )
       AND ($6::text IS NULL OR aa.tag_groups ? $6::text)
+      AND ($8::text IS NULL OR s.type = $8::text)
       AND (
         $7::text IS NULL OR
         CASE
@@ -1746,7 +1760,7 @@ export async function listHighQualityByDate(params: {
     ORDER BY d.rank_score DESC, d.analyzed_at DESC
     LIMIT $2 OFFSET $3
   `,
-    [date, limit, offset, qualityTier, qualityThreshold, tagGroupOrNull, tagOrNull],
+    [date, limit, offset, qualityTier, qualityThreshold, tagGroupOrNull, tagOrNull, sourceChannelOrNull],
   );
 
   return {
@@ -1767,6 +1781,7 @@ export async function listHighQualityRange(params: {
   tag?: string;
   qualityTier?: string;
   qualityThreshold?: number;
+  sourceChannel?: string;
 }): Promise<{ groups: HighQualityArticleGroup[]; totalArticles: number }> {
   await ensureArticleDbSchema();
   const pool = getPgPool();
@@ -1782,6 +1797,7 @@ export async function listHighQualityRange(params: {
   );
   const tagGroupOrNull = tagGroup || null;
   const tagOrNull = tag || null;
+  const sourceChannelOrNull = String(params.sourceChannel || "").trim() || null;
 
   const candidates =
     qualityTier === "high"
@@ -1795,6 +1811,7 @@ export async function listHighQualityRange(params: {
             a.id AS article_id,
             a.source_id,
             s.name AS source_name,
+            s.type AS source_channel,
             a.title,
             a.original_url,
             a.info_url,
@@ -1822,6 +1839,7 @@ export async function listHighQualityRange(params: {
           WHERE d.date BETWEEN $1::date AND $2::date
             AND aa.quality_score >= $5::double precision
             AND ($3::text IS NULL OR aa.tag_groups ? $3::text)
+            AND ($6::text IS NULL OR s.type = $6::text)
             AND (
               $4::text IS NULL OR
               CASE
@@ -1840,7 +1858,7 @@ export async function listHighQualityRange(params: {
             )
           ORDER BY d.date DESC, d.rank_score DESC, d.selected_at DESC
         `,
-          [fromDate, toDate, tagGroupOrNull, tagOrNull, qualityThreshold],
+          [fromDate, toDate, tagGroupOrNull, tagOrNull, qualityThreshold, sourceChannelOrNull],
         )
       : await pool.query(
           `
@@ -1852,6 +1870,7 @@ export async function listHighQualityRange(params: {
             a.id AS article_id,
             a.source_id,
             s.name AS source_name,
+            s.type AS source_channel,
             a.title,
             a.original_url,
             a.info_url,
@@ -1882,6 +1901,7 @@ export async function listHighQualityRange(params: {
               OR ($5::text = 'general' AND d.quality_score_snapshot < $6::double precision)
             )
             AND ($3::text IS NULL OR aa.tag_groups ? $3::text)
+            AND ($7::text IS NULL OR s.type = $7::text)
             AND (
               $4::text IS NULL OR
               CASE
@@ -1900,7 +1920,7 @@ export async function listHighQualityRange(params: {
             )
           ORDER BY d.date DESC, d.rank_score DESC, d.analyzed_at DESC
         `,
-          [fromDate, toDate, tagGroupOrNull, tagOrNull, qualityTier, qualityThreshold],
+          [fromDate, toDate, tagGroupOrNull, tagOrNull, qualityTier, qualityThreshold, sourceChannelOrNull],
         );
 
   const rows = candidates.rows.map((row) => row as Record<string, unknown>);
@@ -2016,6 +2036,7 @@ export async function listArchivedArticles(params: {
   qualityTier?: string;
   qualityThreshold?: number;
   sourceId?: string;
+  sourceChannel?: string;
   primaryType?: string;
   search?: string;
 }): Promise<{ total: number; items: ArchivedArticleRow[] }> {
@@ -2031,6 +2052,7 @@ export async function listArchivedArticles(params: {
     50,
   );
   const sourceId = String(params.sourceId || "").trim() || null;
+  const sourceChannelOrNull = String(params.sourceChannel || "").trim() || null;
   const primaryType = normalizeTagKey(String(params.primaryType || "")) || null;
   const searchRaw = String(params.search || "").trim();
   const search = searchRaw ? searchRaw.slice(0, 160) : null;
@@ -2050,6 +2072,7 @@ export async function listArchivedArticles(params: {
       )
       AND ($5::text IS NULL OR a.source_id = $5::text)
       AND ($6::text IS NULL OR aa.primary_type = $6::text)
+      AND ($8::text IS NULL OR s.type = $8::text)
       AND (
         $7::text IS NULL
         OR a.title ILIKE ('%' || $7 || '%')
@@ -2059,7 +2082,7 @@ export async function listArchivedArticles(params: {
         OR aa.reason_short ILIKE ('%' || $7 || '%')
       )
   `,
-    [fromDate, toDate, qualityTier, qualityThreshold, sourceId, primaryType, search],
+    [fromDate, toDate, qualityTier, qualityThreshold, sourceId, primaryType, search, sourceChannelOrNull],
   );
 
   const rows = await pool.query(
@@ -2073,6 +2096,7 @@ export async function listArchivedArticles(params: {
         a.id AS article_id,
         a.source_id,
         s.name AS source_name,
+        s.type AS source_channel,
         a.title,
         a.canonical_url,
         a.original_url,
@@ -2115,6 +2139,7 @@ export async function listArchivedArticles(params: {
         )
         AND ($5::text IS NULL OR a.source_id = $5::text)
         AND ($6::text IS NULL OR aa.primary_type = $6::text)
+        AND ($8::text IS NULL OR s.type = $8::text)
         AND (
           $7::text IS NULL
           OR a.title ILIKE ('%' || $7 || '%')
@@ -2150,9 +2175,9 @@ export async function listArchivedArticles(params: {
       WHERE aqf.article_id = filtered.article_id
     ) AS feedback ON TRUE
     ORDER BY filtered.date DESC, filtered.rank_score DESC, filtered.analyzed_at DESC
-    LIMIT $8 OFFSET $9
+    LIMIT $9 OFFSET $10
   `,
-    [fromDate, toDate, qualityTier, qualityThreshold, sourceId, primaryType, search, limit, offset],
+    [fromDate, toDate, qualityTier, qualityThreshold, sourceId, primaryType, search, sourceChannelOrNull, limit, offset],
   );
 
   return {
@@ -2399,6 +2424,7 @@ export async function getHighQualityArticleDetail(articleId: string): Promise<Hi
       a.id AS article_id,
       a.source_id,
       s.name AS source_name,
+      s.type AS source_channel,
       a.title,
       a.canonical_url,
       a.original_url,
@@ -2472,6 +2498,7 @@ export async function getHighQualityArticleDetail(articleId: string): Promise<Hi
     article_id: String(row.article_id || ""),
     source_id: String(row.source_id || ""),
     source_name: String(row.source_name || ""),
+    source_channel: String(row.source_channel || "rss"),
     title: String(row.title || ""),
     canonical_url: String(row.canonical_url || ""),
     original_url: String(row.original_url || ""),

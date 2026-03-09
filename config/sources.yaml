@@ -2,34 +2,42 @@ sources:
   - id: latent_space
     name: Latent.Space
     url: https://www.latent.space/feed
+    source_type: rss
     source_weight: 0.95
   - id: swyx_buttondown
     name: swyx Newsletter
     url: https://buttondown.com/swyx/rss
+    source_type: rss
     source_weight: 0.92
   - id: stable_diffusion_art
     name: Stable Diffusion Art
     url: https://stable-diffusion-art.com/feed/
+    source_type: rss
     source_weight: 0.9
   - id: bens_bites
     name: Ben's Bites
     url: https://www.bensbites.com/feed
+    source_type: rss
     source_weight: 0.88
   - id: sspai
     name: 少数派
     url: https://sspai.com/feed
+    source_type: rss
     source_weight: 0.88
   - id: huggingface_blog
     name: Hugging Face Blog
     url: https://huggingface.co/blog/feed.xml
+    source_type: rss
     source_weight: 0.9
   - id: langchain_blog
     name: LangChain Blog
     url: https://blog.langchain.dev/rss/
+    source_type: rss
     source_weight: 0.9
   - id: understanding_ai
     name: Understanding AI
     url: https://www.understandingai.org/feed
+    source_type: rss
     source_weight: 0.85
 
   # X/Twitter sources via self-hosted RSSHub.
@@ -217,3 +225,17 @@ sources:
     source_type: twitter
     only_external_links: true
     source_weight: 1.08
+
+  # GitHub Trending via RSSHub
+  - id: github_trending_daily
+    name: GitHub Trending (Daily)
+    rsshub_route: /github/trending/daily
+    source_type: github
+    source_weight: 0.85
+
+  # 微信公众号 via RSSHub
+  - id: wechat_cyberchanxin
+    name: 赛博禅心（微信）
+    rsshub_route: /wechat/mp/profile/MzI3NDI5NjM2OQ==
+    source_type: wechat
+    source_weight: 0.88

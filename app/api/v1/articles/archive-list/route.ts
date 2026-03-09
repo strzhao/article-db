@@ -57,6 +57,7 @@ export async function GET(request: Request): Promise<Response> {
     const limit = boundedInt(String(url.searchParams.get("limit") || "80"), 80, 1, 200);
     const offset = boundedInt(String(url.searchParams.get("offset") || "0"), 0, 0, 20_000);
     const sourceId = String(url.searchParams.get("source_id") || "").trim();
+    const sourceChannel = String(url.searchParams.get("source_channel") || "").trim();
     const primaryType = String(url.searchParams.get("primary_type") || "").trim();
     const search = String(url.searchParams.get("q") || "").trim();
     const normalizedFrom = fromDate <= toDate ? fromDate : toDate;
@@ -69,6 +70,7 @@ export async function GET(request: Request): Promise<Response> {
       limit,
       offset,
       sourceId: sourceId || undefined,
+      sourceChannel: sourceChannel || undefined,
       primaryType: primaryType || undefined,
       search: search || undefined,
     });
@@ -84,6 +86,7 @@ export async function GET(request: Request): Promise<Response> {
         limit,
         offset,
         source_id: sourceId,
+        source_channel: sourceChannel,
         primary_type: primaryType,
         q: search,
         total: result.total,

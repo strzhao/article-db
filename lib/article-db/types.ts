@@ -11,6 +11,7 @@ export interface HighQualityArticleItem {
   source_host: string;
   source_id: string;
   source_name: string;
+  source_channel: string;
   date: string;
   digest_id: string;
   generated_at: string;
@@ -31,6 +32,7 @@ export interface HighQualityArticleDetail {
   article_id: string;
   source_id: string;
   source_name: string;
+  source_channel: string;
   title: string;
   canonical_url: string;
   original_url: string;
@@ -95,6 +97,7 @@ export interface ArchivedArticleRow {
   is_selected: boolean;
   source_id: string;
   source_name: string;
+  source_channel: string;
   source_host: string;
   title: string;
   canonical_url: string;

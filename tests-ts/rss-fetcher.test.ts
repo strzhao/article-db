@@ -10,7 +10,7 @@ function source(id: string, url: string): SourceConfig {
     name: id,
     url,
     sourceWeight: 1,
-    sourceType: null,
+    sourceType: "rss",
     onlyExternalLinks: false,
   };
 }

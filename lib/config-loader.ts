@@ -81,7 +81,7 @@ export function loadSources(sourcePath?: string): SourceConfig[] {
       name: String(record.name || "").trim() || sourceId,
       url,
       sourceWeight: Number(record.source_weight ?? 1.0) || 1.0,
-      sourceType: String(record.source_type || "").trim() || null,
+      sourceType: String(record.source_type || "rss").trim(),
       onlyExternalLinks: Boolean(record.only_external_links || false),
     });
 

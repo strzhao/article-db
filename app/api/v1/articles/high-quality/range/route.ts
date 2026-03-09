@@ -57,6 +57,7 @@ export async function GET(request: Request): Promise<Response> {
     const tagGroup = String(url.searchParams.get("tag_group") || "").trim();
     const tag = String(url.searchParams.get("tag") || "").trim();
     const qualityTier = normalizeQualityTier(String(url.searchParams.get("quality_tier") || ""));
+    const sourceChannel = String(url.searchParams.get("source_channel") || "").trim();
 
     const result = await listHighQualityRange({
       fromDate: fromDate <= toDate ? fromDate : toDate,
@@ -65,6 +66,7 @@ export async function GET(request: Request): Promise<Response> {
       tagGroup: tagGroup || undefined,
       tag: tag || undefined,
       qualityTier,
+      sourceChannel: sourceChannel || undefined,
     });
 
     return jsonResponse(
@@ -78,6 +80,7 @@ export async function GET(request: Request): Promise<Response> {
         tag_group: tagGroup || "",
         tag: tag || "",
         quality_tier: qualityTier,
+        source_channel: sourceChannel,
         total_articles: result.totalArticles,
         groups: result.groups,
       },

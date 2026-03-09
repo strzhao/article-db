@@ -22,6 +22,7 @@ export interface FetchHighQualityRangeParams {
   toDate: string;
   limitPerDay: number;
   qualityTier?: string;
+  sourceChannel?: string;
 }
 
 export interface FetchFlomoNextBatchParams {
@@ -63,6 +64,9 @@ export async function fetchHighQualityRange(
     limit_per_day: String(params.limitPerDay),
     quality_tier: String(params.qualityTier || "high"),
   });
+  if (params.sourceChannel) {
+    query.set("source_channel", params.sourceChannel);
+  }
 
   const raw = (await fetchJson(`${root}/api/v1/articles/high-quality/range?${query.toString()}`, {
     method: "GET",
