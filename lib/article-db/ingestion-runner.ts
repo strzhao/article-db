@@ -13,6 +13,8 @@ import {
   createIngestionRun,
   failStaleIngestionRuns,
   finishIngestionRun,
+  getArticleSummary,
+  getHighQualityArticleDetail,
   listArticleContentTargets,
   loadFeedbackAdjustmentMap,
   pruneDailyHighQualityByCurrentScore,
@@ -20,13 +22,16 @@ import {
   replaceDailyAnalyzed,
   replaceDailyHighQuality,
   touchIngestionRun,
+  tryLockSummaryForGeneration,
   upsertArticleAnalyses,
   upsertArticleContentSnapshots,
+  upsertArticleSummary,
   upsertArticles,
   upsertDailyAnalyzed,
   upsertDailyHighQuality,
   upsertSources,
 } from "@/lib/article-db/repository";
+import { generateArticleSummary } from "@/lib/llm/article-summary-generator";
 
 function targetDate(dateValue: string | undefined, timezoneName: string): string {
   if (dateValue) return dateValue;
@@ -80,6 +85,80 @@ function normalizeBucketKey(value: string): string {
     .replace(/[^a-z0-9_\-]/g, "_")
     .replace(/_+/g, "_")
     .replace(/^_+|_+$/g, "");
+}
+
+async function batchGenerateSummaries(
+  articleIds: string[],
+): Promise<{ attempted: number; completed: number; failed: number }> {
+  const stats = { attempted: 0, completed: 0, failed: 0 };
+  if (!articleIds.length) return stats;
+
+  for (const articleId of articleIds) {
+    const existing = await getArticleSummary(articleId);
+    if (existing && existing.status === "completed") continue;
+
+    const locked = await tryLockSummaryForGeneration(articleId);
+    if (!locked) continue;
+
+    stats.attempted++;
+    try {
+      const detail = await getHighQualityArticleDetail(articleId);
+      if (!detail) {
+        stats.failed++;
+        continue;
+      }
+
+      const hasContent =
+        (detail.content_full_text && detail.content_full_text.length > 50) ||
+        (detail.content_text && detail.content_text.length > 50) ||
+        (detail.summary_raw && detail.summary_raw.length > 20);
+
+      if (!hasContent) {
+        await upsertArticleSummary({
+          articleId,
+          summaryMarkdown: "",
+          modelName: "",
+          promptVersion: "",
+          status: "failed",
+          errorMessage: "No content available",
+        });
+        stats.failed++;
+        continue;
+      }
+
+      const result = await generateArticleSummary({
+        articleId,
+        title: detail.title,
+        url: detail.original_url || detail.canonical_url,
+        contentFullText: detail.content_full_text,
+        contentText: detail.content_text,
+        summaryRaw: detail.summary_raw,
+        leadParagraph: detail.lead_paragraph,
+      });
+
+      await upsertArticleSummary({
+        articleId,
+        summaryMarkdown: result.markdown,
+        modelName: result.modelName,
+        promptVersion: result.promptVersion,
+        status: "completed",
+      });
+      stats.completed++;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      await upsertArticleSummary({
+        articleId,
+        summaryMarkdown: "",
+        modelName: "",
+        promptVersion: "",
+        status: "failed",
+        errorMessage: errorMessage.slice(0, 2000),
+      });
+      stats.failed++;
+    }
+  }
+
+  return stats;
 }
 
 async function withTimeout<T>(label: string, timeoutMs: number, task: Promise<T>): Promise<T> {
@@ -548,6 +627,12 @@ export async function runIngestionWithResult(options: RunIngestionOptions = {}):
                 persisted: 0,
               };
 
+        const summaryAutoGenEnabled = isEnabled("SUMMARY_AUTO_GENERATE", "true");
+        const summaryAutoStats =
+          summaryAutoGenEnabled && selectedRows.length
+            ? await batchGenerateSummaries(selectedRows.map((item) => item.articleId))
+            : { attempted: 0, completed: 0, failed: 0 };
+
         const adjustedRows = scoredRows.filter((item) => item.feedbackAdjustment !== 0);
         const feedbackAdjustmentTotal = adjustedRows.reduce((sum, item) => sum + item.feedbackAdjustment, 0);
         const feedbackAdjustmentPositive = adjustedRows.filter((item) => item.feedbackAdjustment > 0).length;
@@ -622,6 +707,10 @@ export async function runIngestionWithResult(options: RunIngestionOptions = {}):
           hq_content_crawl_fetched: contentCrawlStats.fetched,
           hq_content_crawl_failed: contentCrawlStats.failed,
           hq_content_crawl_persisted: contentCrawlStats.persisted,
+          summary_auto_generate_enabled: summaryAutoGenEnabled,
+          summary_auto_attempted: summaryAutoStats.attempted,
+          summary_auto_completed: summaryAutoStats.completed,
+          summary_auto_failed: summaryAutoStats.failed,
         };
 
         await finishIngestionRun({
