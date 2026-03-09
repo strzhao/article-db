@@ -23,7 +23,7 @@ export interface ArticleDbAuthSuccess {
 export interface ArticleDbAuthFailure {
   ok: false;
   status: 401 | 403;
-  error: "missing_access_token" | "invalid_access_token" | "forbidden_not_in_allowlist";
+  error: "missing_access_token" | "invalid_access_token";
   message: string;
   mode: ArticleDbAuthMode;
 }
@@ -74,20 +74,6 @@ function authConfig(): AuthConfig | null {
 
 function legacyToken(): string {
   return String(process.env.ARTICLE_DB_API_TOKEN || "").trim();
-}
-
-function allowlistEmails(): Set<string> {
-  const raw = String(process.env.AUTH_EMAIL_ALLOWLIST || "").trim();
-  if (!raw) {
-    return new Set();
-  }
-
-  return new Set(
-    raw
-      .split(/[\s,]+/)
-      .map((item) => item.trim().toLowerCase())
-      .filter(Boolean),
-  );
 }
 
 function resolveJwksResolver(jwksUrl: string): ReturnType<typeof createRemoteJWKSet> {
@@ -142,17 +128,6 @@ async function verifyJwtAccessToken(token: string, config: AuthConfig): Promise<
       };
     }
 
-    const allowlist = allowlistEmails();
-    if (!allowlist.size || !allowlist.has(user.email)) {
-      return {
-        ok: false,
-        status: 403,
-        error: "forbidden_not_in_allowlist",
-        message: "email_not_in_allowlist",
-        mode: "jwt",
-      };
-    }
-
     return {
       ok: true,
       mode: "jwt",
@@ -183,15 +158,6 @@ function authIsConfigured(config: AuthConfig | null, legacy: string): boolean {
 
 export function articleDbAuthEnabled(): boolean {
   return authIsConfigured(authConfig(), legacyToken());
-}
-
-export function isEmailInAllowlist(email: string): boolean {
-  const normalized = String(email || "").trim().toLowerCase();
-  if (!normalized) {
-    return false;
-  }
-  const allowlist = allowlistEmails();
-  return allowlist.has(normalized);
 }
 
 export async function authenticateArticleDbRequest(request: Request, options: AuthOptions = {}): Promise<ArticleDbAuthResult> {

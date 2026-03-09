@@ -11,7 +11,8 @@ interface AuthStatePayload {
   expiresAt: number;
 }
 
-interface GatewaySessionPayload {
+export interface GatewaySessionPayload {
+  userId: string;
   email: string;
   issuedAt: number;
   expiresAt: number;
@@ -145,9 +146,10 @@ export function verifyAuthStateCookieValue(raw: string, expectedState: string): 
   };
 }
 
-export function createGatewaySessionCookieValue(email: string, ttlSeconds = 43_200): string {
+export function createGatewaySessionCookieValue(userId: string, email: string, ttlSeconds = 43_200): string {
   const now = Date.now();
   return encodeSignedPayload({
+    userId: String(userId || "").trim(),
     email: String(email || "").trim().toLowerCase(),
     issuedAt: now,
     expiresAt: now + ttlSeconds * 1000,
@@ -160,6 +162,7 @@ export function verifyGatewaySessionCookieValue(raw: string): GatewaySessionPayl
     return null;
   }
 
+  const userId = String(decoded.userId || "").trim();
   const email = String(decoded.email || "").trim().toLowerCase();
   const issuedAt = Number(decoded.issuedAt || 0);
   const expiresAt = Number(decoded.expiresAt || 0);
@@ -172,6 +175,7 @@ export function verifyGatewaySessionCookieValue(raw: string): GatewaySessionPayl
   }
 
   return {
+    userId,
     email,
     issuedAt,
     expiresAt,

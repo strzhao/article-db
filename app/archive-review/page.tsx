@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { buildAiEvalObservabilitySnapshot } from "@/lib/article-db/ai-observability";
-import { authBridgeEnabled, isEmailInAllowlist } from "@/lib/article-db/auth";
+import { authBridgeEnabled } from "@/lib/article-db/auth";
 import {
   GATEWAY_SESSION_COOKIE_NAME,
   verifyGatewaySessionCookieValue,
@@ -166,7 +166,7 @@ export default async function ArchiveReviewPage(props: {
     const cookieStore = await cookies();
     const gatewayRaw = String(cookieStore.get(GATEWAY_SESSION_COOKIE_NAME)?.value || "").trim();
     const gatewaySession = verifyGatewaySessionCookieValue(gatewayRaw);
-    if (!gatewaySession || !isEmailInAllowlist(gatewaySession.email)) {
+    if (!gatewaySession) {
       redirect(`/auth/start?next=${encodeURIComponent(nextPath)}`);
     }
   }

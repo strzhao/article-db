@@ -13,7 +13,6 @@ function clearAuthEnv(): void {
   delete process.env.AUTH_ISSUER;
   delete process.env.AUTH_AUDIENCE;
   delete process.env.AUTH_JWKS_URL;
-  delete process.env.AUTH_EMAIL_ALLOWLIST;
   delete process.env.ARTICLE_DB_API_TOKEN;
 }
 
@@ -45,11 +44,10 @@ describe("article-db auth", () => {
     expect(result.mode).toBe("legacy_token");
   });
 
-  it("verifies jwt and enforces allowlist", async () => {
+  it("verifies jwt for any valid user", async () => {
     process.env.AUTH_ISSUER = "https://user.stringzhao.life";
     process.env.AUTH_AUDIENCE = "base-account-client";
     process.env.AUTH_JWKS_URL = "https://user.stringzhao.life/.well-known/jwks.json";
-    process.env.AUTH_EMAIL_ALLOWLIST = "daniel@example.com";
 
     vi.mocked(jwtVerify).mockResolvedValue({
       payload: {
@@ -74,42 +72,10 @@ describe("article-db auth", () => {
     expect(createRemoteJWKSet).toHaveBeenCalledTimes(1);
   });
 
-  it("rejects jwt user outside allowlist", async () => {
-    process.env.AUTH_ISSUER = "https://user.stringzhao.life";
-    process.env.AUTH_AUDIENCE = "base-account-client";
-    process.env.AUTH_JWKS_URL = "https://user.stringzhao.life/.well-known/jwks.json";
-    process.env.AUTH_EMAIL_ALLOWLIST = "daniel@example.com";
-
-    vi.mocked(jwtVerify).mockResolvedValue({
-      payload: {
-        sub: "usr_other",
-        email: "other@example.com",
-      },
-      protectedHeader: {
-        alg: "RS256",
-      },
-    } as never);
-
-    const result = await authenticateArticleDbRequest(
-      new Request("https://example.com/api/v1/articles/high-quality", {
-        headers: {
-          Authorization: "Bearer jwt-token",
-        },
-      }),
-    );
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.status).toBe(403);
-      expect(result.error).toBe("forbidden_not_in_allowlist");
-    }
-  });
-
   it("returns missing_access_token when auth is configured", async () => {
     process.env.AUTH_ISSUER = "https://user.stringzhao.life";
     process.env.AUTH_AUDIENCE = "base-account-client";
     process.env.AUTH_JWKS_URL = "https://user.stringzhao.life/.well-known/jwks.json";
-    process.env.AUTH_EMAIL_ALLOWLIST = "daniel@example.com";
 
     const unauthorized = await requireArticleDbAuth(new Request("https://example.com/api/v1/articles/high-quality"));
     expect(unauthorized?.status).toBe(401);

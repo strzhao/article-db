@@ -14,14 +14,12 @@ function setAuthEnv(): void {
   process.env.AUTH_ISSUER = "https://user.stringzhao.life";
   process.env.AUTH_AUDIENCE = "base-account-client";
   process.env.AUTH_JWKS_URL = "https://user.stringzhao.life/.well-known/jwks.json";
-  process.env.AUTH_EMAIL_ALLOWLIST = "daniel@example.com";
 }
 
 function clearAuthEnv(): void {
   delete process.env.AUTH_ISSUER;
   delete process.env.AUTH_AUDIENCE;
   delete process.env.AUTH_JWKS_URL;
-  delete process.env.AUTH_EMAIL_ALLOWLIST;
 }
 
 describe("auth session finalize route", () => {
@@ -51,7 +49,7 @@ describe("auth session finalize route", () => {
     expect(payload.error).toBe("invalid_state");
   });
 
-  it("writes gateway cookie for allowlisted jwt user", async () => {
+  it("writes gateway cookie for valid jwt user", async () => {
     setAuthEnv();
     vi.mocked(jwtVerify).mockResolvedValue({
       payload: {
@@ -89,7 +87,7 @@ describe("auth session finalize route", () => {
     expect(setCookieHeader).toContain("article_db_auth_state=");
   });
 
-  it("rejects user outside allowlist", async () => {
+  it("accepts any valid jwt user without allowlist", async () => {
     setAuthEnv();
     vi.mocked(jwtVerify).mockResolvedValue({
       payload: {
@@ -118,8 +116,7 @@ describe("auth session finalize route", () => {
     );
 
     const payload = (await response.json()) as Record<string, unknown>;
-    expect(response.status).toBe(403);
-    expect(payload.ok).toBe(false);
-    expect(payload.error).toBe("forbidden_not_in_allowlist");
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
   });
 });
