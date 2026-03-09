@@ -76,7 +76,7 @@ function extractLeadParagraph(item: Parser.Item): string {
   return cleanHtmlText(String(item.title || "")).slice(0, 280).trim();
 }
 
-function parsePublishedAt(item: Parser.Item): Date | null {
+function parsePublishedAt(item: Parser.Item, fallbackToNow = false): Date | null {
   const candidates = [item.isoDate, item.pubDate, (item as any).published, (item as any).updated];
   for (const candidate of candidates) {
     if (!candidate) continue;
@@ -85,7 +85,7 @@ function parsePublishedAt(item: Parser.Item): Date | null {
       return parsed;
     }
   }
-  return null;
+  return fallbackToNow ? new Date() : null;
 }
 
 function makeArticleId(sourceId: string, url: string, title: string): string {
@@ -213,7 +213,7 @@ export async function fetchArticles(
             url,
             sourceId: source.id,
             sourceName: source.name,
-            publishedAt: parsePublishedAt(entry),
+            publishedAt: parsePublishedAt(entry, true),
             summaryRaw: summary,
             leadParagraph: lead,
             contentText,
