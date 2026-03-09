@@ -249,6 +249,19 @@ export interface TagGovernanceFeedbackStat {
   last_seen: string;
 }
 
+export type ArticleSummaryStatus = "pending" | "generating" | "completed" | "failed";
+
+export interface ArticleSummaryRow {
+  article_id: string;
+  summary_markdown: string;
+  model_name: string;
+  prompt_version: string;
+  status: ArticleSummaryStatus;
+  error_message: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface IngestionRunRow {
   id: string;
   run_date: string;

@@ -5,6 +5,8 @@ import { normalizeUrl } from "@/lib/domain/tracker-common";
 import { getPgPool } from "@/lib/infra/postgres";
 import {
   ArticleContentSnapshot,
+  ArticleSummaryRow,
+  ArticleSummaryStatus,
   ArchivedArticleRow,
   ArticleQualityFeedback,
   ArticleQualityFeedbackEvent,
@@ -613,6 +615,19 @@ export async function ensureArticleDbSchema(): Promise<void> {
         ON flomo_archive_push_batches (source_date DESC, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_flomo_archive_article_consumption_source_date
         ON flomo_archive_article_consumption (source_date DESC, consumed_at DESC);
+
+      CREATE TABLE IF NOT EXISTS article_summaries (
+        article_id TEXT PRIMARY KEY REFERENCES articles(id) ON DELETE CASCADE,
+        summary_markdown TEXT NOT NULL DEFAULT '',
+        model_name TEXT NOT NULL DEFAULT '',
+        prompt_version TEXT NOT NULL DEFAULT 'v1',
+        status TEXT NOT NULL DEFAULT 'pending',
+        error_message TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_article_summaries_status ON article_summaries (status);
 
       INSERT INTO daily_analyzed_articles (date, article_id, quality_score_snapshot, rank_score, analyzed_at)
       SELECT date, article_id, quality_score_snapshot, rank_score, selected_at
@@ -3099,4 +3114,83 @@ export async function getLatestIngestionRunByDate(date: string): Promise<Ingesti
   );
   if (!result.rows.length) return null;
   return parseRunRow(result.rows[0] as Record<string, unknown>);
+}
+
+// ── Article Summaries ──
+
+function parseSummaryRow(row: Record<string, unknown>): ArticleSummaryRow {
+  return {
+    article_id: String(row.article_id || ""),
+    summary_markdown: String(row.summary_markdown || ""),
+    model_name: String(row.model_name || ""),
+    prompt_version: String(row.prompt_version || ""),
+    status: String(row.status || "pending") as ArticleSummaryStatus,
+    error_message: String(row.error_message || ""),
+    created_at: toIso(row.created_at),
+    updated_at: toIso(row.updated_at),
+  };
+}
+
+export async function getArticleSummary(articleId: string): Promise<ArticleSummaryRow | null> {
+  await ensureArticleDbSchema();
+  const pool = getPgPool();
+  const result = await pool.query(
+    `SELECT * FROM article_summaries WHERE article_id = $1`,
+    [articleId],
+  );
+  if (!result.rows.length) return null;
+  return parseSummaryRow(result.rows[0] as Record<string, unknown>);
+}
+
+export async function upsertArticleSummary(params: {
+  articleId: string;
+  summaryMarkdown: string;
+  modelName: string;
+  promptVersion: string;
+  status: ArticleSummaryStatus;
+  errorMessage?: string;
+}): Promise<void> {
+  await ensureArticleDbSchema();
+  const pool = getPgPool();
+  await pool.query(
+    `
+    INSERT INTO article_summaries (article_id, summary_markdown, model_name, prompt_version, status, error_message, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+    ON CONFLICT (article_id) DO UPDATE SET
+      summary_markdown = EXCLUDED.summary_markdown,
+      model_name = EXCLUDED.model_name,
+      prompt_version = EXCLUDED.prompt_version,
+      status = EXCLUDED.status,
+      error_message = EXCLUDED.error_message,
+      updated_at = NOW()
+    `,
+    [
+      params.articleId,
+      params.summaryMarkdown,
+      params.modelName,
+      params.promptVersion,
+      params.status,
+      params.errorMessage || "",
+    ],
+  );
+}
+
+export async function tryLockSummaryForGeneration(articleId: string): Promise<boolean> {
+  await ensureArticleDbSchema();
+  const pool = getPgPool();
+
+  const insertResult = await pool.query(
+    `
+    INSERT INTO article_summaries (article_id, status, created_at, updated_at)
+    VALUES ($1, 'generating', NOW(), NOW())
+    ON CONFLICT (article_id) DO UPDATE SET
+      status = 'generating',
+      updated_at = NOW()
+    WHERE article_summaries.status IN ('pending', 'failed')
+    RETURNING article_id
+    `,
+    [articleId],
+  );
+
+  return insertResult.rowCount !== null && insertResult.rowCount > 0;
 }
