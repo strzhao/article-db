@@ -226,16 +226,16 @@ sources:
     only_external_links: true
     source_weight: 1.08
 
-  # GitHub Trending via RSSHub
+  # GitHub Trending (via mshibanami/GitHubTrendingRSS, GitHub Pages hosted)
   - id: github_trending_daily
     name: GitHub Trending (Daily)
-    rsshub_route: /github/trending/daily
+    url: https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml
     source_type: github
     source_weight: 0.85
 
-  # 微信公众号 via RSSHub
-  - id: wechat_cyberchanxin
-    name: 赛博禅心（微信）
-    rsshub_route: /wechat/mp/profile/MzI3NDI5NjM2OQ==
-    source_type: wechat
-    source_weight: 0.88
+  # 微信公众号 (暂不可用: 当前RSSHub实例不支持微信路由，需部署WeWe RSS或配置feeddd)
+  # - id: wechat_cyberchanxin
+  #   name: 赛博禅心（微信）
+  #   rsshub_route: /wechat/mp/profile/MzI3NDI5NjM2OQ==
+  #   source_type: wechat
+  #   source_weight: 0.88
