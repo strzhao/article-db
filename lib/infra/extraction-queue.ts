@@ -3,10 +3,15 @@ import type { UpstashClient } from "./upstash";
 
 const TASK_KEY_PREFIX = "extraction:task:";
 const PENDING_QUEUE_KEY = "extraction:pending";
+const USER_TASKS_PREFIX = "extraction:user:";
 const TASK_TTL_SECONDS = 7 * 24 * 3600;
 
 function taskKey(taskId: string): string {
   return `${TASK_KEY_PREFIX}${taskId}`;
+}
+
+function userTasksKey(userId: string): string {
+  return `${USER_TASKS_PREFIX}${userId}`;
 }
 
 export async function enqueueExtractionTask(redis: UpstashClient, task: ExtractionTask): Promise<void> {
@@ -29,6 +34,46 @@ export async function enqueueExtractionTask(redis: UpstashClient, task: Extracti
   await redis.expire(taskKey(task.task_id), TASK_TTL_SECONDS);
   // Add to pending queue (sorted set with created_at as score)
   await redis.zadd(PENDING_QUEUE_KEY, Date.now(), task.task_id);
+  // Add to user index
+  if (task.user_id) {
+    await redis.zadd(userTasksKey(task.user_id), Date.now(), task.task_id);
+  }
+}
+
+/** Save a task that completed immediately (webpage/twitter) to Redis + user index. */
+export async function saveCompletedTask(redis: UpstashClient, task: ExtractionTask): Promise<void> {
+  const serialized: Record<string, string> = {
+    task_id: task.task_id,
+    url: task.url,
+    platform: task.platform,
+    status: task.status,
+    user_id: task.user_id,
+    resources: JSON.stringify(task.resources),
+    metadata: JSON.stringify(task.metadata),
+    created_at: task.created_at,
+    blob_ttl_hours: String(task.blob_ttl_hours),
+  };
+  if (task.completed_at) serialized.completed_at = task.completed_at;
+  if (task.error_message) serialized.error_message = task.error_message;
+
+  await redis.hset(taskKey(task.task_id), serialized);
+  await redis.expire(taskKey(task.task_id), TASK_TTL_SECONDS);
+  if (task.user_id) {
+    await redis.zadd(userTasksKey(task.user_id), Date.now(), task.task_id);
+  }
+}
+
+/** List all tasks for a user, newest first. */
+export async function listUserTasks(redis: UpstashClient, userId: string, limit = 50): Promise<ExtractionTask[]> {
+  const taskIds = await redis.zrevrange(userTasksKey(userId), 0, limit - 1);
+  if (!taskIds.length) return [];
+
+  const tasks: ExtractionTask[] = [];
+  for (const id of taskIds) {
+    const task = await getExtractionTask(redis, id);
+    if (task) tasks.push(task);
+  }
+  return tasks;
 }
 
 export async function getExtractionTask(redis: UpstashClient, taskId: string): Promise<ExtractionTask | null> {

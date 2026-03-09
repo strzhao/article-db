@@ -8,7 +8,7 @@ import {
 } from "@/lib/domain/url-extraction-models";
 import { fetchArticleContent, extractRelatedImagesFromHtml } from "@/lib/fetch/article-content-fetcher";
 import { extractTwitterContent } from "@/lib/fetch/twitter-extractor";
-import { enqueueExtractionTask, listPendingTasks } from "@/lib/infra/extraction-queue";
+import { enqueueExtractionTask, listPendingTasks, listUserTasks, saveCompletedTask } from "@/lib/infra/extraction-queue";
 import { jsonResponse } from "@/lib/infra/route-utils";
 import { buildUpstashClientOrNone } from "@/lib/infra/upstash";
 
@@ -140,12 +140,20 @@ export async function POST(request: Request): Promise<Response> {
     if (platform === "webpage") {
       const task = await extractWebpage(url, taskId);
       task.user_id = userId;
+      const redis = buildUpstashClientOrNone();
+      if (redis && userId) {
+        await saveCompletedTask(redis, task).catch(() => {});
+      }
       return jsonResponse(200, { ok: true, task }, true);
     }
 
     if (platform === "twitter") {
       const task = await extractTwitter(url, taskId);
       task.user_id = userId;
+      const redis = buildUpstashClientOrNone();
+      if (redis && userId) {
+        await saveCompletedTask(redis, task).catch(() => {});
+      }
       return jsonResponse(200, { ok: true, task }, true);
     }
 
@@ -189,7 +197,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 }
 
-/** List pending tasks for the extraction worker to poll. */
+/** List pending tasks (for worker) or user tasks (for frontend). */
 export async function GET(request: Request): Promise<Response> {
   const unauthorized = await requireArticleDbAuth(request);
   if (unauthorized) {
@@ -203,6 +211,16 @@ export async function GET(request: Request): Promise<Response> {
     }
 
     const url = new URL(request.url);
+    const userId = String(url.searchParams.get("user_id") || "").trim();
+
+    // If user_id provided, return that user's tasks
+    if (userId) {
+      const limit = Math.max(1, Math.min(50, Number(url.searchParams.get("limit")) || 50));
+      const tasks = await listUserTasks(redis, userId, limit);
+      return jsonResponse(200, { ok: true, tasks }, true);
+    }
+
+    // Otherwise, list pending tasks for extraction worker
     const limit = Math.max(1, Math.min(20, Number(url.searchParams.get("limit")) || 5));
     const tasks = await listPendingTasks(redis, limit);
 
