@@ -1,0 +1,29 @@
+tests-ts/rss-fetcher.test.ts
+  43f19bb4d41e1ecd 72-338
+config/sources.yaml
+  43f19bb4d41e1ecd 264-265,271-273,279-281,287-289,295-297,303-305,311-313,319-321,327-336
+app/page.tsx
+  43f19bb4d41e1ecd 94,195
+lib/fetch/rss-fetcher.ts
+  43f19bb4d41e1ecd 6,217-239
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "28215b983ccecdfa25a7a6662681c52ef766c1db",
+  "prompts": {
+    "43f19bb4d41e1ecd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d420b-bd2f-7983-9067-5bfb80668503",
+        "model": "gpt-5.4"
+      },
+      "human_author": "赵桂雄 <zhaoguixiong@corp.netease.com>",
+      "messages": [],
+      "total_additions": 526,
+      "total_deletions": 204,
+      "accepted_lines": 328,
+      "overriden_lines": 0
+    }
+  }
+}
