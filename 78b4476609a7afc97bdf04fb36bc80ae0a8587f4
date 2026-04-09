@@ -1,0 +1,35 @@
+.env.example
+  206b2ab3bb32550c 1-52
+.claude/doctor-report.md
+  206b2ab3bb32550c 1-105
+CLAUDE.md
+  206b2ab3bb32550c 22-24,94-95,102
+.github/workflows/ci.yml
+  206b2ab3bb32550c 1-22
+biome.json
+  206b2ab3bb32550c 1,4,10-15,20-43,45-49,57-58
+.husky/pre-commit
+  206b2ab3bb32550c 1
+package.json
+  206b2ab3bb32550c 11-13,42-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.6",
+  "base_commit_sha": "78b4476609a7afc97bdf04fb36bc80ae0a8587f4",
+  "prompts": {
+    "206b2ab3bb32550c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7e42531a-25f1-4f48-8999-98da3f6b38df",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 259,
+      "total_deletions": 9,
+      "accepted_lines": 233,
+      "overriden_lines": 13
+    }
+  }
+}
