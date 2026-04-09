@@ -1,0 +1,53 @@
+lib/domain/tracker-common.ts
+  0d90684022ede887 8
+tests-ts/rss-fetcher.test.ts
+  dfe3acc780b6d916 20,75,157,168,239,249,336,343-569
+lib/article-db/ingestion-runner.ts
+  dfe3acc780b6d916 2,56-100,424-425,460-462,464-466,511-512,522-527,615-616,770-789,811-812,842,849,853-856,865-926,944-966
+  0d90684022ede887 388
+README.md
+  dfe3acc780b6d916 46-48
+package.json
+  0d90684022ede887 3
+tests-ts/article-db-ingestion-route.test.ts
+  dfe3acc780b6d916 99-128
+CLAUDE.md
+  0d90684022ede887 53,56,64
+lib/fetch/wechat-sogou-fetcher.ts
+  dfe3acc780b6d916 3,125-133,178,195,202-207
+app/api/v1/ingestion/run/route.ts
+  dfe3acc780b6d916 25-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.6",
+  "base_commit_sha": "aa91d54a3309546a109b031104320d4bf4a47c29",
+  "prompts": {
+    "0d90684022ede887": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f5e9774e-421b-4622-a80a-d22a4bbb9778",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 24,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    },
+    "dfe3acc780b6d916": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d65a1-dbd3-7642-8c0a-a1c5b292c14a",
+        "model": "gpt-5.4"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 508,
+      "total_deletions": 61,
+      "accepted_lines": 471,
+      "overriden_lines": 0
+    }
+  }
+}
