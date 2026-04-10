@@ -1,0 +1,29 @@
+app/api/v1/ingestion/monitor/route.ts
+  83f49f85641d6ce8 1-99
+vercel.json
+  83f49f85641d6ce8 17-20
+tests-ts/ingestion-monitor.test.ts
+  83f49f85641d6ce8 1-281
+lib/article-db/ingestion-monitor.ts
+  83f49f85641d6ce8 1-99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "d664d3a180123061c0df9ad7fb9c649fd4882b6d",
+  "prompts": {
+    "83f49f85641d6ce8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17f95111-960c-43eb-ba09-ed5d0824616d",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 499,
+      "total_deletions": 16,
+      "accepted_lines": 483,
+      "overriden_lines": 0
+    }
+  }
+}
