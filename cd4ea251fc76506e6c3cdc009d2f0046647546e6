@@ -1,0 +1,52 @@
+.autopilot/requirements/20260428-经常遇到电脑卡死的问/state.md
+  bea5ee8759731a3f 3,14
+lib/cache/article-eval-cache.ts
+  de3786f231af218f 89-97,154,170-173,176-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.6",
+  "base_commit_sha": "cd4ea251fc76506e6c3cdc009d2f0046647546e6",
+  "prompts": {
+    "bea5ee8759731a3f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43c2a2db-3645-4f9d-91f4-8c047cff1ab4",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        ".autopilot/requirements/20260428-经常遇到电脑卡死的问/state.md": {
+          "additions": 2,
+          "deletions": 2,
+          "accepted_lines": 2
+        }
+      }
+    },
+    "de3786f231af218f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ee95c7c-8a55-4a47-ae3b-445cf8d9e8ca",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 18,
+      "total_deletions": 9,
+      "accepted_lines": 18,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "lib/cache/article-eval-cache.ts": {
+          "additions": 18,
+          "deletions": 9,
+          "accepted_lines": 18
+        }
+      }
+    }
+  }
+}
