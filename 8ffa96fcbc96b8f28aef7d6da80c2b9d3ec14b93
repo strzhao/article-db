@@ -1,0 +1,43 @@
+tests-ts/chrome-leak-fixes.acceptance.test.ts
+  7a450872315eecdb 21-22,24-26,28,39,88-89,91-93,95-101
+tests-ts/rss-fetcher.test.ts
+  7a450872315eecdb 1,17,36,56,118,143,201,224,293,322,390,426,457-460,487,492,515,553-555,562
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.7",
+  "base_commit_sha": "8ffa96fcbc96b8f28aef7d6da80c2b9d3ec14b93",
+  "prompts": {
+    "7a450872315eecdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e4f1759b-f246-4ac9-89e0-98025a6b43b2",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 45,
+      "total_deletions": 50,
+      "accepted_lines": 46,
+      "overriden_lines": 1,
+      "per_file_stats": {
+        ".autopilot/requirements/20260430-在页面里审核后台，增/state.md": {
+          "additions": 5,
+          "deletions": 3,
+          "accepted_lines": 4
+        },
+        "tests-ts/rss-fetcher.test.ts": {
+          "additions": 21,
+          "deletions": 19,
+          "accepted_lines": 23,
+          "overriden_lines": 1
+        },
+        "tests-ts/chrome-leak-fixes.acceptance.test.ts": {
+          "additions": 19,
+          "deletions": 28,
+          "accepted_lines": 19
+        }
+      }
+    }
+  }
+}
