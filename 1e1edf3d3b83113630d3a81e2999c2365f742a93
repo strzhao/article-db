@@ -1,0 +1,65 @@
+lib/cache/article-eval-cache.ts
+  bc35590a759920e5 89-91,151,167-170,173-176
+tests-ts/article-evaluator-score-fix.test.ts
+  bc35590a759920e5 1-99
+tests-ts/scoring-normalization.acceptance.test.ts
+  bc35590a759920e5 1-329,331-426
+tests-ts/article-evaluator-normalization.test.ts
+  bc35590a759920e5 97-103
+lib/llm/article-evaluator.ts
+  bc35590a759920e5 13,43,45-48,467-468,558-565
+.autopilot/requirements/20260430-深入分析当前的-AI-打/state.md
+  bc35590a759920e5 1-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.7",
+  "base_commit_sha": "1e1edf3d3b83113630d3a81e2999c2365f742a93",
+  "prompts": {
+    "bc35590a759920e5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9d949d64-9718-4134-b0af-817811f961f7",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 699,
+      "total_deletions": 79,
+      "accepted_lines": 648,
+      "overriden_lines": 1,
+      "per_file_stats": {
+        ".autopilot/requirements/20260430-深入分析当前的-AI-打/state.md": {
+          "additions": 89,
+          "accepted_lines": 89
+        },
+        "lib/cache/article-eval-cache.ts": {
+          "additions": 12,
+          "deletions": 15,
+          "accepted_lines": 12
+        },
+        "tests-ts/article-evaluator-score-fix.test.ts": {
+          "additions": 101,
+          "deletions": 2,
+          "accepted_lines": 99
+        },
+        "tests-ts/article-evaluator-normalization.test.ts": {
+          "additions": 7,
+          "deletions": 7,
+          "accepted_lines": 7
+        },
+        "lib/llm/article-evaluator.ts": {
+          "additions": 25,
+          "deletions": 16,
+          "accepted_lines": 16
+        },
+        "tests-ts/scoring-normalization.acceptance.test.ts": {
+          "additions": 465,
+          "deletions": 39,
+          "accepted_lines": 425,
+          "overriden_lines": 1
+        }
+      }
+    }
+  }
+}
