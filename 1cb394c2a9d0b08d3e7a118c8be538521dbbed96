@@ -1,0 +1,122 @@
+app/archive-review/ArticleDrawer.tsx
+  7a450872315eecdb 23-24,94-111,131-133,181,198-219
+app/archive-review/ArticlesTab.tsx
+  7a450872315eecdb 245-250
+app/archive-review/page.module.css
+  7a450872315eecdb 1096-1129
+app/archive-review/page.tsx
+  7a450872315eecdb 69-70
+lib/article-db/repository.ts
+  7a450872315eecdb 479,2534-2535
+.autopilot/active
+  7a450872315eecdb 1
+tests-ts/article-db-archive-list-route.test.ts
+  7a450872315eecdb 73
+tests-ts/archive-review-content.acceptance.test.ts
+  7a450872315eecdb 1-41,43-44,47-140,143-155,158-180,183-244,247-252,255-268,271,274-308,311-335,337-371,374-394,397-402,405-407
+.autopilot/requirements/20260428-昨天和今天的-@..-ai-news/state.md
+  de3786f231af218f 3,14
+lib/article-db/types.ts
+  7a450872315eecdb 134
+.autopilot/requirements/20260430-在页面里审核后台，增/state.md
+  7a450872315eecdb 1-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.7",
+  "base_commit_sha": "1cb394c2a9d0b08d3e7a118c8be538521dbbed96",
+  "prompts": {
+    "7a450872315eecdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e4f1759b-f246-4ac9-89e0-98025a6b43b2",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 650,
+      "total_deletions": 49,
+      "accepted_lines": 572,
+      "overriden_lines": 27,
+      "per_file_stats": {
+        "app/archive-review/page.module.css": {
+          "additions": 34,
+          "accepted_lines": 34
+        },
+        ".autopilot/requirements/20260430-在页面里审核后台，增/state.md": {
+          "additions": 83,
+          "accepted_lines": 83
+        },
+        "lib/article-db/types.ts": {
+          "additions": 1,
+          "accepted_lines": 1
+        },
+        "app/archive-review/ArticleDrawer.tsx": {
+          "additions": 90,
+          "deletions": 45,
+          "accepted_lines": 60
+        },
+        "app/archive-review/ArticlesTab.tsx": {
+          "additions": 8,
+          "deletions": 2,
+          "accepted_lines": 6,
+          "overriden_lines": 1
+        },
+        "app/archive-review/page.tsx": {
+          "additions": 2,
+          "accepted_lines": 2
+        },
+        "tests-ts/article-db-archive-list-route.test.ts": {
+          "additions": 1,
+          "accepted_lines": 1
+        },
+        "tests-ts/archive-review-content.acceptance.test.ts": {
+          "additions": 427,
+          "accepted_lines": 381,
+          "overriden_lines": 26
+        },
+        ".autopilot/active": {
+          "additions": 1,
+          "deletions": 1,
+          "accepted_lines": 1
+        },
+        "lib/article-db/repository.ts": {
+          "additions": 3,
+          "deletions": 1,
+          "accepted_lines": 3
+        }
+      }
+    },
+    "bea5ee8759731a3f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43c2a2db-3645-4f9d-91f4-8c047cff1ab4",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "de3786f231af218f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ee95c7c-8a55-4a47-ae3b-445cf8d9e8ca",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        ".autopilot/requirements/20260428-昨天和今天的-@..-ai-news/state.md": {
+          "accepted_lines": 2
+        }
+      }
+    }
+  }
+}
