@@ -1,0 +1,28 @@
+.autopilot/requirements/20260430-在页面里审核后台，增/state.md
+  7a450872315eecdb 3,14,84-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.7",
+  "base_commit_sha": "291b6f1b2860ae805e76a2f0a08b3bab7e01b35d",
+  "prompts": {
+    "7a450872315eecdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e4f1759b-f246-4ac9-89e0-98025a6b43b2",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "赵桂雄",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        ".autopilot/requirements/20260430-在页面里审核后台，增/state.md": {
+          "accepted_lines": 4
+        }
+      }
+    }
+  }
+}
